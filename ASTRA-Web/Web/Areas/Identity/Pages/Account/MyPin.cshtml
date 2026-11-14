@@ -1,0 +1,15 @@
+@page
+@model Web.Areas.Identity.Pages.Account.MyPinModel
+@{
+    ViewData["Title"] = "My PIN";
+}
+<h1>My PIN</h1>
+@if (Model.Pin is not null)
+{
+    <p>Your six-digit sign-in code:</p>
+    <p class="fs-3 font-monospace">@Model.Pin</p>
+}
+else
+{
+    <p>Your PIN is not available. Contact ground control.</p>
+}
