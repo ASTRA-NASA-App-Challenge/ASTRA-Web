@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Web.styles.css" asp-append-version="true" />
 </head>
-<body>
+<body class="@(ViewData["CoverPage"] is true ? "astra-cover-page" : "")">
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark astra-navbar">
             <div class="container-fluid">

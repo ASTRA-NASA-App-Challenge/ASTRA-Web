@@ -1,11 +1,12 @@
 @{
     ViewData["Title"] = "ASTRA | Astronaut Health";
     ViewData["FullWidth"] = true;
+    ViewData["CoverPage"] = User.Identity?.IsAuthenticated != true;
 }
 
 @if (User.Identity?.IsAuthenticated != true)
 {
-    <main class="astra-cover" data-space-cover>
+    <div class="astra-cover" data-space-cover>
         <div class="astra-cover__space" aria-hidden="true"></div>
         <div class="astra-cover__shade" aria-hidden="true"></div>
 
@@ -21,21 +22,24 @@
                asp-area="Identity"
                asp-page="/Account/Login">Sign in</a>
             <div class="astra-cover__status" aria-label="Current mission personnel">
-                <div class="astra-cover__status-item">
-                    <span class="astra-cover__status-dot" aria-hidden="true"></span>
-                    <span>
-                        <strong>12</strong>
-                        Astronauts
-                    </span>
-                </div>
-                <div class="astra-cover__status-item">
-                    <span class="astra-cover__status-dot astra-cover__status-dot--medic" aria-hidden="true"></span>
-                    <span>
-                        <strong>04</strong>
-                        Medics
-                    </span>
+                <span class="astra-cover__status-label">On-board</span>
+                <div class="astra-cover__status-counters">
+                    <div class="astra-cover__status-item">
+                        <span class="astra-cover__status-dot" aria-hidden="true"></span>
+                        <span>
+                            <strong>12</strong>
+                            Astronauts
+                        </span>
+                    </div>
+                    <div class="astra-cover__status-item">
+                        <span class="astra-cover__status-dot astra-cover__status-dot--medic" aria-hidden="true"></span>
+                        <span>
+                            <strong>04</strong>
+                            Medics
+                        </span>
+                    </div>
                 </div>
             </div>
         </section>
-    </main>
+    </div>
 }

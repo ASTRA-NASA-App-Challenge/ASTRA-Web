@@ -38,11 +38,30 @@ main {
   padding: 3rem 1.5rem;
 }
 
+.astra-cover-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+
+.astra-cover-page > .container-fluid {
+  display: flex;
+  flex: 1;
+}
+
+.astra-cover-page main[role="main"] {
+  display: flex;
+  flex: 1;
+  padding-bottom: 0 !important;
+}
+
 .astra-cover {
   --horizon-position: 0.5;
   position: relative;
   isolation: isolate;
-  min-height: calc(100vh - 138px);
+  display: flex;
+  flex: 1;
+  align-items: center;
   overflow: hidden;
   background: #020711;
 }
@@ -71,22 +90,23 @@ main {
 }
 
 .astra-cover__content {
+  width: 100%;
   max-width: 700px;
-  padding: clamp(4rem, 12vh, 8rem) clamp(1.5rem, 8vw, 8rem);
+  padding: clamp(1.25rem, 4svh, 2.5rem) clamp(1.5rem, 8vw, 8rem);
 }
 
 .astra-cover h1 {
   margin: 0;
   color: #fff;
-  font-size: clamp(4.5rem, 13vw, 10rem);
+  font-size: clamp(4rem, 15svh, 8rem);
   letter-spacing: -0.1em;
   line-height: 0.82;
 }
 
 .astra-cover__tagline {
-  margin: 1.75rem 0 0;
+  margin: 1.25rem 0 0;
   color: #fff;
-  font-size: clamp(2rem, 4vw, 3.8rem);
+  font-size: clamp(1.75rem, 5svh, 3rem);
   font-weight: 700;
   letter-spacing: -0.06em;
   line-height: 0.98;
@@ -98,16 +118,19 @@ main {
 
 .astra-cover__description {
   max-width: 520px;
-  margin: 1.75rem 0 2rem;
+  margin: 1.25rem 0 1.5rem;
   color: rgba(235, 243, 251, 0.78);
-  font-size: 1.1rem;
-  line-height: 1.7;
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
 .astra-cover__status {
   display: flex;
+  flex-wrap: wrap;
   width: min(100%, 430px);
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   border: 1px solid rgba(145, 221, 255, 0.22);
   border-radius: 0.65rem;
   background: rgba(7, 17, 31, 0.62);
@@ -116,25 +139,38 @@ main {
   padding: 0.85rem 1rem;
 }
 
+.astra-cover__status-label {
+  color: #f4f7fb;
+  font-size: 1.15rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.astra-cover__status-counters {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  margin-left: auto;
+}
+
 .astra-cover__status-item {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   color: rgba(235, 243, 251, 0.68);
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   line-height: 1.35;
 }
 
 .astra-cover__status-item + .astra-cover__status-item {
-  border-top: 1px solid rgba(145, 221, 255, 0.18);
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
+  border-left: 1px solid rgba(145, 221, 255, 0.18);
+  padding-left: clamp(1.25rem, 3vw, 2rem);
 }
 
 .astra-cover__status-item strong {
   display: block;
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
@@ -150,6 +186,42 @@ main {
 .astra-cover__status-dot--medic {
   background: #91ddff;
   box-shadow: 0 0 0.65rem rgba(145, 221, 255, 0.8);
+}
+
+@media (max-height: 700px) {
+  .astra-cover__content {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .astra-cover .astra-eyebrow {
+    margin-bottom: 0.75rem;
+  }
+
+  .astra-cover h1 {
+    font-size: clamp(3rem, 10svh, 5rem);
+  }
+
+  .astra-cover__tagline {
+    margin-top: 0.75rem;
+    font-size: clamp(1.5rem, 4svh, 2rem);
+  }
+
+  .astra-cover__description {
+    margin: 0.75rem 0 1rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .astra-cover .astra-button {
+    padding: 0.6rem 1.25rem;
+  }
+
+  .astra-cover__status {
+    margin-top: 1rem;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
 }
 
 .astra-cover__hint {
