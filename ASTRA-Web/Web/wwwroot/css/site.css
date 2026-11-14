@@ -91,8 +91,8 @@ main {
   background:
     url("https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=2400&q=85")
     center / cover no-repeat;
-  transform: translateX(calc((var(--horizon-position) - 0.5) * -2%)) scale(1.04);
-  transition: transform 120ms ease-out;
+  transform: translateX(calc((var(--horizon-position) - 0.5) * -5%)) scale(1.08);
+  transition: transform 350ms ease-out;
 }
 
 .astra-cover__shade {
@@ -160,15 +160,17 @@ main {
 }
 
 .astra-cover__status-counters {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 1;
+  min-width: 190px;
   align-items: center;
-  gap: clamp(1.25rem, 3vw, 2rem);
-  margin-left: auto;
 }
 
 .astra-cover__status-item {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.6rem;
   color: rgba(235, 243, 251, 0.68);
   font-size: 0.9rem;
@@ -177,7 +179,6 @@ main {
 
 .astra-cover__status-item + .astra-cover__status-item {
   border-left: 1px solid rgba(145, 221, 255, 0.18);
-  padding-left: clamp(1.25rem, 3vw, 2rem);
 }
 
 .astra-cover__status-item strong {
@@ -375,14 +376,19 @@ label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.5rem;
-  line-height: 1.25;
+  height: 2.5rem;
+  line-height: 1;
 }
 
 .astra-navbar .nav-link {
   border-radius: 999px;
-  padding: 0.45rem 0.9rem;
+  padding: 0 0.9rem;
   font-size: 0.9rem;
+}
+
+.astra-nav-label {
+  display: block;
+  line-height: 1;
 }
 
 .astra-navbar .nav-link[aria-current="page"] {
@@ -641,4 +647,249 @@ label {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+/* Shared motion keeps the landing page and account access visually connected. */
+.astra-button,
+.astra-navbar .nav-link,
+.astra-navbar .navbar-brand {
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.astra-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(145, 221, 255, 0.16);
+}
+
+.astra-button:active {
+  transform: translateY(0);
+}
+
+.astra-cover__content > * {
+  animation: astra-arrive 950ms ease both;
+}
+
+.astra-cover__content > :nth-child(2) { animation-delay: 60ms; }
+.astra-cover__content > :nth-child(3) { animation-delay: 120ms; }
+.astra-cover__content > :nth-child(4) { animation-delay: 180ms; }
+.astra-cover__content > :nth-child(5) { animation-delay: 240ms; }
+.astra-cover__content > :nth-child(6) { animation-delay: 300ms; }
+
+.astra-cover__status {
+  transition: border-color 200ms ease, background-color 200ms ease;
+}
+
+.astra-cover__status:hover {
+  border-color: rgba(145, 221, 255, 0.45);
+  background-color: rgba(7, 17, 31, 0.82);
+}
+
+.astra-login__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 560px);
+  align-items: center;
+  gap: clamp(2rem, 4vw, 4rem);
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-top: clamp(1.5rem, 4svh, 3rem);
+  padding-bottom: clamp(1.5rem, 4svh, 3rem);
+}
+
+.astra-login__intro {
+  animation: astra-arrive 700ms ease both;
+}
+
+.astra-login__intro h2 {
+  margin: 0;
+  font-size: clamp(2.25rem, 4.5vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  line-height: 1.06;
+}
+
+.astra-login__intro h2 span { color: #91ddff; }
+
+.astra-login__intro > p:not(.astra-eyebrow) {
+  max-width: 340px;
+  margin: 1.25rem 0 0;
+  color: rgba(235, 243, 251, 0.68);
+  line-height: 1.6;
+}
+
+.astra-login__card {
+  position: relative;
+  width: 100%;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  border: 1px solid rgba(145, 221, 255, 0.25);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, rgba(18, 36, 55, 0.86), rgba(4, 12, 24, 0.94));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(220, 244, 255, 0.06);
+  backdrop-filter: blur(18px);
+  animation: astra-arrive 950ms 100ms ease both, astra-card-glow 5s 1s ease-in-out infinite;
+}
+
+.astra-login__card .astra-eyebrow { margin-bottom: 0.65rem; }
+
+.astra-login .astra-login__card h1 {
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  line-height: 1.1;
+}
+
+.astra-login__lead {
+  margin: 0.75rem 0 1.75rem;
+  color: rgba(235, 243, 251, 0.6);
+  font-size: 0.9rem;
+}
+
+.astra-login__field { margin-bottom: 1.25rem; }
+
+.astra-login__card form {
+  margin-top: 1.75rem;
+}
+
+.astra-login__field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.astra-login__field .form-control {
+  min-height: 3rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.65rem;
+  background-color: rgba(2, 7, 17, 0.5);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.astra-login__field .form-control:focus { background-color: rgba(9, 25, 42, 0.95); }
+.astra-login__field .form-control:-webkit-autofill {
+  -webkit-text-fill-color: #f4f7fb;
+  caret-color: #f4f7fb;
+  -webkit-box-shadow: 0 0 0 1000px #101f32 inset;
+}
+.astra-login__secret { position: relative; }
+.astra-login__secret .form-control { padding-right: 4.5rem; }
+
+.astra-login__reveal {
+  position: absolute;
+  top: 50%;
+  right: 0.65rem;
+  transform: translateY(-50%);
+  min-height: 2.5rem;
+  width: 2.5rem;
+  padding: 0.4rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: #91ddff;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.astra-eye {
+  width: 1.3rem;
+  height: 1.3rem;
+  vertical-align: middle;
+}
+
+.astra-eye--closed,
+.astra-login__reveal[aria-pressed="true"] .astra-eye--open { display: none; }
+.astra-login__reveal[aria-pressed="true"] .astra-eye--closed { display: inline; }
+
+.astra-login__reveal:hover { color: #fff; }
+.astra-login__reveal:focus-visible,
+.astra-login__back:focus-visible { outline: 2px solid #91ddff; outline-offset: 3px; }
+
+.astra-login__help {
+  margin: 0.65rem 0 0;
+  color: rgba(235, 243, 251, 0.55);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.astra-login__submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.astra-login__arrow { transition: transform 180ms ease; }
+.astra-login__submit:hover .astra-login__arrow { transform: translateX(4px); }
+
+.astra-login__support {
+  margin: 1.25rem 0 0.75rem;
+  color: rgba(235, 243, 251, 0.55);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.astra-login__back {
+  display: block;
+  color: #91ddff;
+  font-size: 0.8rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+.astra-login__back:hover { color: #fff; }
+.astra-login__errors.validation-summary-valid { display: none; }
+.astra-login__errors,
+.astra-login__field .field-validation-error { color: #ffb8bd; font-size: 0.85rem; }
+.astra-login__errors ul { padding-left: 1.1rem; }
+.astra-login__field .input-validation-error { border-color: #ffb8bd; }
+
+.astra-orbit {
+  position: relative;
+  width: min(100%, 360px);
+  margin-top: 1rem;
+}
+
+.astra-orbit svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 18px rgba(81, 184, 232, 0.12));
+}
+
+.astra-orbit__satellite,
+.astra-orbit__beacon {
+  transform-origin: 210px 180px;
+  animation: astra-orbit 28s linear infinite;
+}
+
+.astra-orbit__beacon {
+  animation-duration: 18s;
+  animation-direction: reverse;
+}
+
+@keyframes astra-arrive {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes astra-orbit { to { transform: rotate(360deg); } }
+
+@keyframes astra-card-glow {
+  0%, 100% { border-color: rgba(145, 221, 255, 0.25); }
+  50% { border-color: rgba(145, 221, 255, 0.65); }
+}
+
+@media (max-width: 800px) {
+  .astra-login__layout { grid-template-columns: minmax(0, 560px); justify-content: center; gap: 1.5rem; }
+  .astra-login__intro { text-align: center; }
+  .astra-login__intro > p:not(.astra-eyebrow) { margin: 0.75rem auto 0; }
+  .astra-login__intro h2 { font-size: 2rem; }
+  .astra-orbit { margin: 1.25rem auto 0; width: min(100%, 300px); }
+}
+
+@media (max-height: 740px) {
+  .astra-orbit { width: min(100%, 280px); }
+  .astra-login__card { padding: 1.5rem; }
+  .astra-login__lead { margin-bottom: 1.25rem; }
+  .astra-login__field { margin-bottom: 1rem; }
 }

@@ -2,20 +2,117 @@
 @model Web.Areas.Identity.Pages.Account.LoginModel
 @{
     ViewData["Title"] = "Login";
+    ViewData["FullWidth"] = true;
+    ViewData["CoverPage"] = true;
 }
-<h1>Login</h1>
-<p>Crew and medics: use your six-digit PIN as your password. Ground control: use your account password.</p>
-<form method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="mb-3">
-        <label asp-for="Input.Identifier">Username</label>
-        <input asp-for="Input.Identifier" class="form-control" autocomplete="username" />
-        <span asp-validation-for="Input.Identifier" class="text-danger"></span>
+<div class="astra-cover astra-login" data-space-cover>
+    <div class="astra-cover__space" aria-hidden="true"></div>
+    <div class="astra-cover__shade" aria-hidden="true"></div>
+    <div class="astra-login__layout astra-shell">
+        <section class="astra-login__intro" aria-labelledby="login-intro">
+            <p class="astra-eyebrow">Human health, beyond Earth</p>
+            <h2 id="login-intro">Your health.<br /><span>Across every orbit.</span></h2>
+            <p>Your personal health companion, wherever the mission takes you.</p>
+            <div class="astra-orbit" aria-hidden="true">
+                <svg viewBox="0 -20 420 410" fill="none" focusable="false">
+                    <defs>
+                        <radialGradient id="earth-ocean" cx="0.3" cy="0.25" r="0.8">
+                            <stop stop-color="#7bd8ed" /><stop offset="0.4" stop-color="#226b95" /><stop offset="1" stop-color="#061124" />
+                        </radialGradient>
+                        <radialGradient id="earth-atmosphere">
+                            <stop offset="0.65" stop-color="#72d9ff" stop-opacity="0" /><stop offset="0.8" stop-color="#72d9ff" stop-opacity="0.16" /><stop offset="1" stop-color="#72d9ff" stop-opacity="0" />
+                        </radialGradient>
+                        <linearGradient id="earth-night" x1="135" y1="140" x2="290" y2="220" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#020711" stop-opacity="0" /><stop offset="0.5" stop-color="#020711" stop-opacity="0.08" /><stop offset="1" stop-color="#020711" stop-opacity="0.9" />
+                        </linearGradient>
+                        <clipPath id="earth-disc"><circle cx="210" cy="180" r="82" /></clipPath>
+                    </defs>
+                    <g stroke="#91ddff" stroke-opacity="0.2">
+                        <path d="M20 60V36H44M376 36H400V60M20 300V324H44M376 324H400V300" />
+                        <path d="M210 20V34M210 326V340M50 180H64M356 180H370" />
+                        <circle cx="210" cy="180" r="146" />
+                        <circle cx="210" cy="180" r="155" stroke-dasharray="1 13" stroke-width="4" />
+                        <ellipse cx="210" cy="180" rx="185" ry="58" transform="rotate(-25 210 180)" />
+                        <circle cx="210" cy="180" r="112" stroke-dasharray="3 7" />
+                    </g>
+                    <circle cx="210" cy="180" r="117" fill="url(#earth-atmosphere)" />
+                    <circle cx="210" cy="180" r="83" stroke="#9ae7ff" stroke-opacity="0.6" />
+                    <g clip-path="url(#earth-disc)">
+                        <circle cx="210" cy="180" r="82" fill="url(#earth-ocean)" />
+                        <g fill="#71c6bf" fill-opacity="0.7" stroke="#abe5d6" stroke-opacity="0.25">
+                            <path d="M130 129L148 116L167 118L174 127L190 130L191 141L181 149L175 160L164 166L157 158L145 157L140 144L129 140Z" />
+                            <path d="M168 164L179 167L181 177L194 184L196 200L187 212L182 231L174 242L170 225L163 213L163 198L153 183L157 171Z" />
+                            <path d="M214 118L232 113L251 124L272 122L291 137L296 154L278 163L266 155L253 167L242 157L229 161L223 149L212 145L206 134Z" />
+                            <path d="M224 160L242 162L253 175L251 191L239 205L229 221L220 211L215 193L207 182L210 169Z" />
+                            <path d="M267 215L284 208L298 218L290 233L274 236L263 228Z" />
+                            <path d="M133 105L155 99L176 102L167 109L145 112Z" />
+                        </g>
+                        <g stroke="#bcf0ff" stroke-opacity="0.13">
+                            <ellipse cx="210" cy="180" rx="38" ry="82" /><ellipse cx="210" cy="180" rx="64" ry="82" />
+                            <ellipse cx="210" cy="180" rx="82" ry="30" /><ellipse cx="210" cy="180" rx="82" ry="59" />
+                            <path d="M128 180H292M210 98V262" />
+                        </g>
+                        <g stroke="#e5faff" stroke-opacity="0.45" stroke-linecap="round">
+                            <path d="M146 139Q163 130 179 140M192 118Q218 106 238 125M176 207Q199 217 212 207M252 186Q273 174 288 185" stroke-width="3" />
+                            <path d="M137 192Q154 182 169 190M233 144Q248 137 266 146M214 241Q237 230 252 237" stroke-width="2" />
+                        </g>
+                        <circle cx="210" cy="180" r="82" fill="url(#earth-night)" />
+                    </g>
+                    <g class="astra-orbit__satellite">
+                        <path d="M210 34A146 146 0 0 1 356 180" stroke="#91ddff" stroke-opacity="0.65" stroke-linecap="round" />
+                        <g transform="translate(210 34) rotate(25)">
+                            <path d="M-23 0H23M0 -12V12" stroke="#caeeff" />
+                            <rect x="-25" y="-8" width="17" height="16" rx="1" fill="#153f63" stroke="#91ddff" />
+                            <rect x="8" y="-8" width="17" height="16" rx="1" fill="#153f63" stroke="#91ddff" />
+                            <path d="M-19 -8V8M-14 -8V8M14 -8V8M19 -8V8M-25 0H-8M8 0H25" stroke="#91ddff" stroke-opacity="0.4" />
+                            <rect x="-5" y="-6" width="10" height="12" rx="2" fill="#c5efff" />
+                            <circle cy="-10" r="2" fill="#fff" />
+                        </g>
+                    </g>
+                    <g class="astra-orbit__beacon">
+                        <circle cx="210" cy="292" r="4" fill="#a6f1e0" /><circle cx="210" cy="292" r="9" stroke="#a6f1e0" stroke-opacity="0.3" />
+                    </g>
+                    <g fill="#91ddff" font-family="monospace" font-size="14" font-weight="600" letter-spacing="2" opacity="0.85">
+                        <text x="30" y="2">EARTH / ORBITAL VIEW</text><text x="296" y="370">ASTRA</text>
+                    </g>
+                </svg>
+            </div>
+        </section>
+        <section class="astra-login__card" aria-labelledby="login-heading">
+            <p class="astra-eyebrow">Welcome aboard</p>
+            <h1 id="login-heading">Login</h1>
+            <form method="post" data-login-form asp-route-returnUrl="@(Request.Query["returnUrl"].ToString())">
+                <div asp-validation-summary="ModelOnly" class="astra-login__errors" role="alert"></div>
+                <div class="astra-login__field">
+                    <label asp-for="Input.Identifier">Username</label>
+                    <input asp-for="Input.Identifier" class="form-control" autocomplete="username"
+                           placeholder="Your username" aria-describedby="username-error" required />
+                    <span asp-validation-for="Input.Identifier" id="username-error" class="text-danger"></span>
+                </div>
+                <div class="astra-login__field">
+                    <label asp-for="Input.Password">Password / PIN</label>
+                    <div class="astra-login__secret">
+                        <input asp-for="Input.Password" type="password" class="form-control" autocomplete="current-password"
+                               placeholder="Your password or PIN" aria-describedby="password-help password-error" required />
+                        <button type="button" class="astra-login__reveal" data-secret-toggle
+                                aria-controls="Input_Password" aria-pressed="false" aria-label="Show password or PIN" hidden>
+                            <svg class="astra-eye astra-eye--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true" focusable="false">
+                                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <svg class="astra-eye astra-eye--closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true" focusable="false">
+                                <path d="m3 3 18 18M10.6 5.1 12 5c6.5 0 10 7 10 7a19 19 0 0 1-3.1 4M6.2 6.2A22 22 0 0 0 2 12s3.5 7 10 7a12 12 0 0 0 5.8-1.8M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+                            </svg>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Input.Password" id="password-error" class="text-danger"></span>
+                    <p id="password-help" class="astra-login__help">Crew &amp; medics: your six-digit PIN.<br />Ground control: your account password.</p>
+                </div>
+                <button type="submit" class="btn astra-button astra-button--primary astra-login__submit">
+                    <span data-login-label>Login</span><span class="astra-login__arrow" aria-hidden="true">&rarr;</span>
+                </button>
+            </form>
+            <p class="astra-login__support">Need access? Contact ground control.</p>
+            <a class="astra-login__back" asp-controller="Home" asp-action="Index" asp-area="">&larr; Back to home</a>
+        </section>
     </div>
-    <div class="mb-3">
-        <label asp-for="Input.Password">Password / crew PIN</label>
-        <input asp-for="Input.Password" type="password" class="form-control" autocomplete="current-password" />
-        <span asp-validation-for="Input.Password" class="text-danger"></span>
-    </div>
-    <button type="submit" class="btn astra-button astra-button--primary">Login</button>
-</form>
+</div>

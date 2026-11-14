@@ -24,7 +24,7 @@
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index"
-                               aria-current="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "page" : null)">@(User.Identity?.IsAuthenticated == true ? "Dashboard" : "Home")</a>
+                               aria-current="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "page" : null)"><span class="astra-nav-label">@(User.Identity?.IsAuthenticated == true ? "Dashboard" : "Home")</span></a>
                         </li>
                     </ul>
                     <partial name="_LoginPartial" />
