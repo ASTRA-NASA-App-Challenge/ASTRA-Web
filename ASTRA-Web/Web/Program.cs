@@ -26,17 +26,24 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddScoped<Services.Personnel.IOnboardPersonnelService, Services.Personnel.OnboardPersonnelService>();
 
-builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = false;
-        options.User.RequireUniqueEmail = false;
         options.User.AllowedUserNameCharacters += " ";
         options.Password.RequiredLength = 12;
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
-    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Identity/Account/Login";
+    options.LogoutPath = "/Identity/Account/Logout";
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
+    };
+});
 builder.Services.AddSingleton<PinLookupService>();
 builder.Services.AddDataProtection().SetApplicationName("ASTRA");
 builder.Services.AddSingleton<PinProtectionService>();
@@ -50,16 +57,7 @@ builder.Services.AddAuthorization(options => options.AddPolicy(MedicalPolicies.R
     policy => policy.RequireAuthenticatedUser().AddRequirements(new ReadMedicalRecordRequirement())));
 builder.Services.AddSingleton<IAuthorizationHandler, MedicalRecordAuthorizationHandler>();
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages(options =>
-{
-    // Remove the registration routes supplied by the Identity UI library too.
-    options.Conventions.AddAreaPageRouteModelConvention("Identity", "/Account/Register", model => model.Selectors.Clear());
-    options.Conventions.AddAreaPageRouteModelConvention("Identity", "/Account/RegisterConfirmation", model => model.Selectors.Clear());
-    foreach (var page in new[] { "/Account/Manage/Email", "/Account/ForgotPassword", "/Account/ForgotPasswordConfirmation",
-        "/Account/ResetPassword", "/Account/ResetPasswordConfirmation", "/Account/ConfirmEmail",
-        "/Account/ConfirmEmailChange", "/Account/ResendEmailConfirmation" })
-        options.Conventions.AddAreaPageRouteModelConvention("Identity", page, model => model.Selectors.Clear());
-});
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 

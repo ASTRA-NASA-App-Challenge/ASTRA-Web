@@ -9,10 +9,6 @@ public sealed class AccountUserValidator : UserValidator<ApplicationUser>
     {
         var result = await base.ValidateAsync(manager, user);
         var errors = result.Errors.ToList();
-        if (!string.IsNullOrEmpty(user.Email)) errors.Add(new IdentityError
-        {
-            Code = "EmailNotSupported", Description = "Accounts use a username and do not have an email address."
-        });
         if (!user.IsGroundControl)
         {
             if (string.IsNullOrWhiteSpace(user.FirstName))

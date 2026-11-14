@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Web.Identity;
@@ -16,6 +18,42 @@ namespace Tests;
 
 public class IdentityTests
 {
+    [Fact]
+    public async Task AccountCleanupDropsContactFieldsAndPreservesCredentialsAndRoleMembership()
+    {
+        using var connection = new SqliteConnection("Data Source=:memory:");
+        connection.Open();
+        using var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite(connection).Options);
+        var migrator = db.Database.GetService<IMigrator>();
+        await migrator.MigrateAsync("20261114130044_AddMemberNames");
+        await db.Database.ExecuteSqlRawAsync("""
+            INSERT INTO "AspNetUsers" ("Id", "UserName", "FirstName", "LastName", "PasswordHash", "PinLookup", "ProtectedPin",
+                "Email", "EmailConfirmed", "PhoneNumberConfirmed", "TwoFactorEnabled", "AccessFailedCount", "LockoutEnabled", "IsGroundControl")
+            VALUES ('crew', 'alex', 'Alex', 'Morgan', 'password-hash', 'unique-lookup', 'encrypted-pin', 'unused@example.test', 1, 0, 0, 0, 1, 0);
+            INSERT INTO "AspNetRoles" ("Id", "Name") VALUES ('crew-role', 'Crew');
+            INSERT INTO "AspNetUserRoles" ("UserId", "RoleId") VALUES ('crew', 'crew-role');
+            """);
+        await migrator.MigrateAsync();
+        var user = await db.Users.SingleAsync();
+        Assert.Equal("Alex", user.FirstName);
+        Assert.Equal("Morgan", user.LastName);
+        Assert.Equal("password-hash", user.PasswordHash);
+        Assert.Equal("encrypted-pin", user.ProtectedPin);
+        Assert.Equal("unique-lookup", user.PinLookup);
+        Assert.Single(await db.UserRoles.ToListAsync());
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA table_info('AspNetUsers')";
+        using var reader = await command.ExecuteReaderAsync();
+        var columns = new List<string>();
+        while (await reader.ReadAsync()) columns.Add(reader.GetString(1));
+        foreach (var removed in new[] { "Email", "NormalizedEmail", "EmailConfirmed", "PhoneNumber", "PhoneNumberConfirmed", "TwoFactorEnabled" })
+        {
+            Assert.DoesNotContain(removed, columns);
+            Assert.Null(db.Model.FindEntityType(typeof(ApplicationUser))!.FindProperty(removed));
+        }
+    }
+
     [Theory]
     [InlineData(AppRoles.Crew, null, "Morgan", "FirstNameRequired")]
     [InlineData(AppRoles.Crew, "  ", "Morgan", "FirstNameRequired")]
@@ -49,26 +87,6 @@ public class IdentityTests
         var invalid = await members.CreateAsync(actor, "invalid", AppRoles.Crew, "Taylor", "Lee", null, "12345");
         Assert.Contains(invalid.Errors, error => error.Code == "InvalidPin");
         Assert.Equal(1, await users.Users.CountAsync());
-    }
-
-    [Theory]
-    [InlineData(false, "012345")]
-    [InlineData(true, "Ground-Control!2026")]
-    public async Task AccountsRejectEmailOnCreationAndUpdate(bool groundControl, string password)
-    {
-        using var fixture = new IdentityFixture();
-        var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
-        var user = new ApplicationUser { UserName = "no-email", IsGroundControl = groundControl, Email = "unused@example.test", FirstName = "Alex", LastName = "Morgan" };
-        var result = await users.CreateAsync(user, password);
-        Assert.Contains(result.Errors, error => error.Code == "EmailNotSupported");
-        user.Email = null;
-        Assert.True((await users.CreateAsync(user, password)).Succeeded);
-        Assert.True(await users.CheckPasswordAsync(user, password));
-        result = await users.SetEmailAsync(user, "unused@example.test");
-        Assert.Contains(result.Errors, error => error.Code == "EmailNotSupported");
-        var stored = await fixture.Services.GetRequiredService<ApplicationDbContext>().Users.AsNoTracking().SingleAsync();
-        Assert.Null(stored.Email);
-        Assert.Null(stored.NormalizedEmail);
     }
 
     [Fact]
@@ -150,7 +168,7 @@ public class IdentityTests
         Assert.Null((await db.Users.SingleAsync()).Email);
         Assert.Null((await db.Users.SingleAsync()).NormalizedEmail);
         Assert.False((await db.Users.SingleAsync()).EmailConfirmed);
-        Assert.Equal(5, (await db.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(6, (await db.Database.GetAppliedMigrationsAsync()).Count());
         await IdentityDatabaseInitializer.InitializeAsync(db);
         Assert.Single(await db.Users.ToListAsync());
     }
