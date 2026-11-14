@@ -391,6 +391,20 @@ label {
   line-height: 1;
 }
 
+.astra-navbar .navbar-nav .astra-navbar__home {
+  min-width: 5rem;
+  padding: 0 1.25rem;
+  border: 1px solid rgba(145, 221, 255, 0.25);
+  background: rgba(145, 221, 255, 0.06);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.astra-navbar .navbar-nav .astra-navbar__home:hover {
+  border-color: #91ddff;
+  background: rgba(145, 221, 255, 0.14);
+}
+
 .astra-navbar .nav-link[aria-current="page"] {
   color: #91ddff;
   background: rgba(145, 221, 255, 0.08);
@@ -449,6 +463,12 @@ label {
 
   .astra-navbar .navbar-nav {
     align-items: stretch;
+  }
+
+  .astra-navbar .nav-item,
+  .astra-navbar .nav-item form,
+  .astra-navbar .nav-link {
+    width: 100%;
   }
 
   .astra-navbar .astra-navbar__login {

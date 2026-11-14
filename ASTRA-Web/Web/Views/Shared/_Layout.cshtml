@@ -23,7 +23,7 @@
                 <div id="astra-navigation" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index"
+                            <a class="nav-link astra-navbar__home" asp-area="" asp-controller="Home" asp-action="Index"
                                aria-current="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "page" : null)"><span class="astra-nav-label">@(User.Identity?.IsAuthenticated == true ? "Dashboard" : "Home")</span></a>
                         </li>
                     </ul>
