@@ -150,7 +150,7 @@ main {
 
 .astra-dashboard__chart span.is-tooltip-visible::after {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translateY(0);
 }
 
 .astra-dashboard__chart span.is-tooltip-visible {
@@ -758,7 +758,7 @@ label {
   text-transform: uppercase;
 }
 
-@media (min-width: 576px) {
+@media (min-width: 992px) {
   .astra-navbar .nav-item:has(> .astra-navbar__username) {
     position: absolute;
     top: 50%;
@@ -769,24 +769,7 @@ label {
   }
 }
 
-@media (min-width: 576px) and (max-width: 991.98px) {
-  .astra-navbar .navbar-brand {
-    margin-right: 0.5rem;
-    font-size: 1.2rem;
-    gap: 0.5rem;
-  }
-
-  .astra-navbar .navbar-nav .astra-navbar__home {
-    min-width: 4.5rem;
-    padding: 0 0.75rem;
-  }
-
-  .astra-navbar .nav-item:has(> .astra-navbar__username) {
-    max-width: 24vw;
-  }
-}
-
-@media (max-width: 575.98px) {
+@media (max-width: 991.98px) {
   .astra-navbar .navbar-collapse {
     padding-top: 0.75rem;
   }
@@ -820,6 +803,191 @@ label {
 
 .astra-footer a {
   color: #91ddff;
+}
+
+/* Ground-control personnel overview. */
+.astra-roster {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-top: clamp(2rem, 5vw, 4rem);
+  padding-bottom: 2rem;
+}
+
+.astra-roster__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-bottom: 2rem;
+  animation: astra-arrive 600ms ease both;
+}
+
+.astra-roster__header .astra-eyebrow { margin-bottom: 0.75rem; }
+.astra-roster__header h1 { margin: 0; font-size: clamp(2.25rem, 4.5vw, 4rem); font-weight: 700; letter-spacing: -0.06em; }
+.astra-roster__header h1 span { color: #91ddff; }
+.astra-roster__lead { margin: 0.75rem 0 0; color: rgba(235, 243, 251, 0.6); }
+
+.astra-roster__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+  animation: astra-arrive 650ms 80ms ease both;
+}
+
+.astra-roster__stats > div {
+  padding: 1.35rem 1.5rem;
+  border: 1px solid rgba(145, 221, 255, 0.16);
+  border-radius: 0.85rem;
+  background: linear-gradient(120deg, rgba(21, 45, 67, 0.7), rgba(9, 23, 38, 0.8));
+}
+
+.astra-roster__stats span { display: flex; align-items: center; gap: 0.5rem; color: rgba(235, 243, 251, 0.65); font-size: 0.8rem; }
+.astra-roster__stats strong { display: block; margin: 0.65rem 0 0.25rem; font-size: 2.5rem; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.06em; }
+.astra-roster__dot { width: 6px; height: 6px; border-radius: 50%; background: #91ddff; box-shadow: 0 0 10px rgba(145, 221, 255, 0.45); }
+.astra-roster__dot--medic { background: #a6f1d3; }
+
+.astra-roster__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(145, 221, 255, 0.12);
+  border-radius: 0.85rem;
+  background: rgba(7, 17, 31, 0.6);
+  animation: astra-arrive 650ms 140ms ease both;
+}
+
+.astra-roster__search { position: relative; flex: 1 1 260px; }
+.astra-roster__search svg { position: absolute; top: 50%; left: 0.85rem; width: 1.1rem; height: 1.1rem; transform: translateY(-50%); color: #91ddff; pointer-events: none; }
+.astra-roster__search input,
+.astra-roster__sort { min-height: 2.75rem; border: 1px solid rgba(145, 221, 255, 0.18); border-radius: 0.55rem; background: #0b1a2b; color: #f4f7fb; font-size: 0.85rem; }
+.astra-roster__search input { width: 100%; padding: 0.65rem 0.85rem 0.65rem 2.5rem; }
+.astra-roster__search input::placeholder { color: rgba(235, 243, 251, 0.4); }
+.astra-roster__sort { padding: 0.65rem 0.75rem; }
+.astra-roster__filters { display: flex; align-items: center; gap: 0.25rem; }
+.astra-roster__filters button { padding: 0.65rem 0.85rem; border: 1px solid transparent; border-radius: 0.5rem; background: transparent; color: rgba(235, 243, 251, 0.6); font-size: 0.8rem; white-space: nowrap; transition: color 160ms ease, background-color 160ms ease; }
+.astra-roster__filters button:hover { color: #fff; background: rgba(145, 221, 255, 0.06); }
+.astra-roster__filters button[aria-pressed="true"] { border-color: rgba(145, 221, 255, 0.25); color: #91ddff; background: rgba(145, 221, 255, 0.1); }
+.astra-roster :is(button, input, select):focus-visible { outline: 2px solid #91ddff; outline-offset: 3px; }
+
+.astra-roster__list-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 2rem 0 1rem; }
+.astra-roster__list-heading h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.astra-roster__list-heading > span { color: rgba(235, 243, 251, 0.45); font-size: 0.75rem; }
+.astra-roster__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.astra-roster [hidden] { display: none !important; }
+
+.astra-member {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.5rem;
+  border: 1px solid rgba(145, 221, 255, 0.18);
+  border-radius: 0.85rem;
+  background: linear-gradient(145deg, #102237, #0a1727);
+  animation: astra-arrive 650ms ease both;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.astra-member:hover { border-color: rgba(145, 221, 255, 0.45); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15); }
+.astra-member__heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.astra-member__tools { display: flex; align-items: center; gap: 0.25rem; }
+.astra-member__tools .astra-member__role { margin-right: 0.35rem; }
+.astra-member__tool { display: grid; place-items: center; width: 2.15rem; height: 2.15rem; padding: 0; border: 1px solid transparent; border-radius: 0.5rem; background: transparent; color: #91ddff; transition: background-color 180ms ease, border-color 180ms ease; }
+.astra-member__tool svg { width: 1.05rem; height: 1.05rem; }
+.astra-member__tool:hover { border-color: rgba(145, 221, 255, 0.25); background: rgba(145, 221, 255, 0.08); }
+.astra-member__tool--delete { color: #f6a6b0; }
+.astra-member__tool--delete:hover { border-color: rgba(246, 166, 176, 0.3); background: rgba(246, 166, 176, 0.08); }
+.astra-member__avatar { display: grid; place-items: center; width: 3rem; height: 3rem; border: 1px solid rgba(145, 221, 255, 0.25); border-radius: 0.75rem; background: rgba(145, 221, 255, 0.1); color: #91ddff; font-size: 1rem; font-weight: 600; }
+.astra-member__role { padding: 0.3rem 0.65rem; border: 1px solid rgba(145, 221, 255, 0.2); border-radius: 999px; background: rgba(145, 221, 255, 0.06); color: #91ddff; font-size: 0.7rem; }
+.astra-member--medic :is(.astra-member__avatar, .astra-member__role) { color: #a6f1d3; border-color: rgba(166, 241, 211, 0.25); background: rgba(166, 241, 211, 0.07); }
+.astra-member h3 { margin: 0; font-size: 1.15rem; line-height: 1.4; font-weight: 600; overflow-wrap: anywhere; }
+.astra-member__username { margin: 0.4rem 0 1.5rem; color: rgba(235, 243, 251, 0.45); font-size: 0.8rem; overflow-wrap: anywhere; }
+.astra-member__pin { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(145, 221, 255, 0.12); }
+.astra-member__pin label, .astra-member__pin-label { display: block; margin-bottom: 0.3rem; color: rgba(235, 243, 251, 0.5); font-size: 0.7rem; }
+.astra-member__pin input { display: block; width: 8rem; max-width: 100%; padding: 0; border: 0; background: transparent; color: #e6f6ff; font-family: monospace; font-size: 1.15rem; line-height: 1.5; letter-spacing: 0.2em; }
+.astra-member__actions { display: flex; align-items: center; gap: 0.25rem; }
+.astra-member__actions button { width: 2.5rem; height: 2.5rem; padding: 0.5rem; border: 1px solid transparent; border-radius: 0.5rem; background: transparent; color: #91ddff; }
+.astra-member__actions button:hover { border-color: rgba(145, 221, 255, 0.2); background: rgba(145, 221, 255, 0.08); }
+.astra-member__actions svg { width: 1.15rem; height: 1.15rem; vertical-align: middle; }
+.astra-member__actions [aria-pressed="true"] .astra-eye--open { display: none; }
+.astra-member__actions [aria-pressed="true"] .astra-eye--closed { display: inline; }
+.astra-member__unavailable { color: rgba(235, 243, 251, 0.5); font-size: 0.8rem; }
+.astra-roster__empty { padding: 3rem 1.5rem; border: 1px dashed rgba(145, 221, 255, 0.2); border-radius: 0.85rem; text-align: center; }
+.astra-roster__empty > span { display: block; margin-bottom: 1rem; color: #91ddff; font-size: 2rem; }
+.astra-roster__empty h3 { font-size: 1.25rem; }
+.astra-roster__empty p { color: rgba(235, 243, 251, 0.5); font-size: 0.9rem; }
+.astra-roster__empty .astra-button { margin-top: 0.5rem; border: 1px solid rgba(145, 221, 255, 0.3); color: #91ddff; }
+.astra-member__feedback { position: absolute; z-index: 2; bottom: 4.5rem; right: 1.5rem; width: max-content; max-width: calc(100% - 2rem); margin: 0; padding: 0.45rem 0.75rem; border: 1px solid rgba(166, 241, 211, 0.4); border-radius: 0.5rem; background: #132b32; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); color: #a6f1d3; font-size: 0.8rem; text-align: center; pointer-events: none; opacity: 0; transform: translateY(0.5rem); transition: opacity 180ms ease, transform 180ms ease; }
+.astra-member__feedback.is-visible { opacity: 1; transform: translateY(0); }
+.astra-roster__notice { display: flex; align-items: center; gap: 0.75rem; margin: -0.5rem 0 1.5rem; padding: 1rem 1.25rem; border: 1px solid rgba(166, 241, 211, 0.25); border-radius: 0.75rem; background: rgba(166, 241, 211, 0.06); color: #a6f1d3; font-size: 0.9rem; animation: astra-arrive 400ms ease both; }
+
+.astra-member-modal { --bs-modal-width: 700px; --bs-modal-margin: 1.25rem; }
+.astra-member-modal .modal-content { overflow: hidden; border: 1px solid rgba(145, 221, 255, 0.3); border-radius: 1rem; background: linear-gradient(145deg, #14283b, #07111f 75%); color: #f4f7fb; box-shadow: 0 30px 100px rgba(0, 0, 0, 0.5); }
+.astra-member-modal .modal-header { align-items: flex-start; padding: 1.75rem 2rem 1.25rem; border-bottom: 1px solid rgba(145, 221, 255, 0.12); }
+.astra-member-modal .astra-eyebrow { margin-bottom: 0.6rem; font-size: 0.65rem; }
+.astra-member-modal .modal-title { font-size: 2rem; font-weight: 700; letter-spacing: -0.05em; line-height: 1.15; }
+.astra-member-modal .modal-title span { color: #91ddff; }
+.astra-member-modal .modal-body { padding: 1.25rem 2rem 1.75rem; }
+.astra-member-modal :is(#add-member-description, #edit-member-description, #delete-member-description) { margin: 0 0 1.5rem; color: rgba(235, 243, 251, 0.55); font-size: 0.8rem; }
+.astra-delete-modal { --bs-modal-width: 500px; }
+.astra-delete-modal #delete-member-description { margin-bottom: 0.75rem; font-size: 1rem; }
+.astra-delete-modal #delete-member-description strong { color: #f4f7fb; overflow-wrap: anywhere; }
+.astra-delete-modal__warning { margin: 0 0 1.5rem; color: #f6a6b0; font-size: 0.85rem; line-height: 1.6; }
+.astra-delete-modal .astra-button--danger { border: 1px solid #ffb4bb; background: #ffb4bb; color: #310d16; }
+.astra-delete-modal .astra-button--danger:hover { border-color: #ffd0d4; background: #ffd0d4; box-shadow: 0 6px 24px rgba(255, 126, 144, 0.15); }
+.astra-modal-close { display: grid; flex-shrink: 0; place-items: center; width: 2.5rem; height: 2.5rem; margin-left: auto; padding: 0; border: 1px solid rgba(145, 221, 255, 0.2); border-radius: 0.6rem; background: rgba(145, 221, 255, 0.05); color: #91ddff; transition: background-color 180ms ease, border-color 180ms ease; }
+.astra-modal-close svg { width: 1.25rem; height: 1.25rem; }
+.astra-modal-close:hover { border-color: #91ddff; background: rgba(145, 221, 255, 0.12); }
+.astra-member-form__names { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.astra-member-form__credentials { display: grid; grid-template-columns: 1fr; }
+.astra-member-form__pin-note { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem 1.25rem; border: 1px solid rgba(145, 221, 255, 0.16); border-left: 3px solid #91ddff; border-radius: 0.6rem; background: linear-gradient(110deg, rgba(145, 221, 255, 0.07), rgba(145, 221, 255, 0.02)); }
+.astra-member-form__pin-icon { display: grid; flex: 0 0 2.25rem; height: 2.25rem; place-items: center; color: #91ddff; }
+.astra-member-form__pin-icon svg { width: 1.75rem; height: 1.75rem; }
+.astra-member-form__pin-note h3 { margin: 0; color: #d9f2ff; font-size: 0.85rem; font-weight: 600; }
+.astra-member-form__pin-note p { margin: 0.4rem 0 0; color: rgba(235, 243, 251, 0.6); font-size: 0.75rem; line-height: 1.6; }
+.astra-member-form__field { min-width: 0; margin-bottom: 1.25rem; }
+.astra-member-form__field label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 600; }
+.astra-member-form__field label > span { color: rgba(235, 243, 251, 0.4); font-size: 0.65rem; font-weight: 400; }
+.astra-member-form__field :is(.form-control, .form-select) { min-height: 3rem; border: 1px solid rgba(145, 221, 255, 0.22); border-radius: 0.6rem; background-color: #091827; color: #f4f7fb; font-size: 0.9rem; }
+.astra-member-form__field .form-control { padding: 0.7rem 0.85rem; }
+.astra-member-form__field .form-select { --bs-form-select-bg-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%2391ddff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m4 6 4 4 4-4'/%3E%3C/svg%3E"); color-scheme: dark; }
+.astra-member-form__field .form-control::placeholder { color: rgba(235, 243, 251, 0.35); }
+.astra-member-form__field :is(.form-control, .form-select):focus { border-color: #91ddff; box-shadow: 0 0 0 3px rgba(145, 221, 255, 0.12); }
+.astra-member-form__field .input-validation-error { border-color: #ffb8bd; }
+.astra-member-form__field .field-validation-error { display: block; margin-top: 0.4rem; color: #ffb8bd; font-size: 0.75rem; }
+.astra-modal-errors { color: #ffb8bd; font-size: 0.85rem; }
+.astra-modal-errors.validation-summary-valid { display: none; }
+.astra-modal-errors ul { padding-left: 1.25rem; }
+.astra-member-form__footer { display: flex; justify-content: flex-end; gap: 0.75rem; padding-top: 1.25rem; border-top: 1px solid rgba(145, 221, 255, 0.12); }
+.astra-member-form__cancel { border: 1px solid rgba(145, 221, 255, 0.2); color: #c9d9e5; }
+.astra-member-form__cancel:hover { border-color: #91ddff; background: rgba(145, 221, 255, 0.08); color: #fff; }
+.astra-member-modal :is(button, input, select):focus-visible { outline: 2px solid #91ddff; outline-offset: 3px; }
+.modal-backdrop.show { opacity: 0.75; }
+
+@media (max-width: 575.98px) {
+  .astra-member-modal { --bs-modal-margin: 0.75rem; }
+  .astra-member-modal .modal-header { padding: 1.25rem; }
+  .astra-member-modal .modal-body { padding: 1.25rem; }
+  .astra-member-form__names { grid-template-columns: 1fr; gap: 0; }
+  .astra-member-form__pin-note { align-items: flex-start; gap: 0.65rem; padding: 0.85rem; }
+  .astra-member-form__footer .astra-button { flex: 1; }
+}
+
+@media (max-width: 1150px) { .astra-roster__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 650px) {
+  .astra-roster__grid { grid-template-columns: 1fr; }
+  .astra-roster__stats { gap: 0.5rem; }
+  .astra-roster__stats > div { padding: 1rem 0.75rem; }
+  .astra-roster__stats strong { font-size: 2rem; }
+  .astra-roster__stats span { font-size: 0.7rem; min-height: 2rem; }
+  .astra-roster__toolbar { padding: 0.75rem; }
+  .astra-roster__filters { flex: 1; }
+  .astra-roster__filters button { padding: 0.6rem; }
+  .astra-roster__sort { max-width: 100%; font-size: 0.75rem; }
 }
 
 .astra-eyebrow {

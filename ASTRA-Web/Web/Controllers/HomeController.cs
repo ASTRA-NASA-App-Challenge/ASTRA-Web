@@ -10,6 +10,9 @@ namespace Web.Controllers
     {
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
+            if (User.Identity?.IsAuthenticated == true && User.IsInRole(AppRoles.GroundControl))
+                return RedirectToAction("Index", "Crew");
+
             if (User.Identity?.IsAuthenticated == true
                 && (User.IsInRole(AppRoles.Crew) || User.IsInRole(AppRoles.Medic)))
                 return RedirectToAction(nameof(Dashboard));

@@ -44,6 +44,8 @@ builder.Services.ConfigureApplicationCookie(options =>
         return Task.CompletedTask;
     };
 });
+// Recheck changed roles and deleted accounts on their next authenticated request.
+builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
 builder.Services.AddSingleton<PinLookupService>();
 builder.Services.AddDataProtection().SetApplicationName("ASTRA");
 builder.Services.AddSingleton<PinProtectionService>();

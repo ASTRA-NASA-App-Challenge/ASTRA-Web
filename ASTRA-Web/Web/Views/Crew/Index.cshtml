@@ -1,0 +1,261 @@
+@model CrewOverviewViewModel
+@{
+    ViewData["Title"] = "Crew Overview";
+    ViewData["FullWidth"] = true;
+    var crewCount = Model.Members.Count(member => !member.IsMedic);
+    var medicCount = Model.Members.Count(member => member.IsMedic);
+}
+
+<section class="astra-roster astra-shell" data-crew-roster aria-labelledby="roster-heading">
+    <header class="astra-roster__header">
+        <div>
+            <p class="astra-eyebrow">Ground control / Personnel</p>
+            <h1 id="roster-heading">Crew Overview<span>.</span></h1>
+            <p class="astra-roster__lead">The people behind the mission. All in one place.</p>
+        </div>
+        <button type="button" class="btn astra-button astra-button--primary" data-bs-toggle="modal" data-bs-target="#add-member-modal">
+            <span aria-hidden="true">+</span> Add member
+        </button>
+    </header>
+
+    @if (TempData["CrewNotice"] is string notice)
+    {
+        <div class="astra-roster__notice" role="status"><span aria-hidden="true">✓</span> @notice</div>
+    }
+
+    <div class="astra-roster__stats" aria-label="Onboard personnel totals">
+        <div><span>On-board members</span><strong>@Model.Members.Count.ToString("D2")</strong></div>
+        <div><span><i class="astra-roster__dot" aria-hidden="true"></i> Crew members</span><strong>@crewCount.ToString("D2")</strong></div>
+        <div><span><i class="astra-roster__dot astra-roster__dot--medic" aria-hidden="true"></i> Medics</span><strong>@medicCount.ToString("D2")</strong></div>
+    </div>
+
+    <div class="astra-roster__toolbar">
+        <div class="astra-roster__search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
+            <label class="visually-hidden" for="crew-search">Search by name or username</label>
+            <input id="crew-search" type="search" placeholder="Search by name or username" autocomplete="off" data-crew-search />
+        </div>
+        <div class="astra-roster__filters" role="group" aria-label="Filter members by role">
+            <button type="button" data-crew-filter="all" aria-pressed="true">All members</button>
+            <button type="button" data-crew-filter="crew" aria-pressed="false">Crew</button>
+            <button type="button" data-crew-filter="medic" aria-pressed="false">Medics</button>
+        </div>
+        <label class="visually-hidden" for="crew-sort">Sort members</label>
+        <select id="crew-sort" class="astra-roster__sort" data-crew-sort>
+            <option value="asc">Name: A–Z</option>
+            <option value="desc">Name: Z–A</option>
+            <option value="role">Role</option>
+        </select>
+    </div>
+
+    <div class="astra-roster__list-heading">
+        <h2>On-board members</h2>
+        <span data-crew-results aria-live="polite">@Model.Members.Count @(Model.Members.Count == 1 ? "member" : "members")</span>
+    </div>
+    <div class="astra-roster__grid" data-crew-grid>
+        @foreach (var member in Model.Members)
+        {
+            <article class="astra-member @(member.IsMedic ? "astra-member--medic" : "")" data-crew-member
+                     data-name="@member.FullName" data-username="@member.Username" data-role="@(member.IsMedic ? "medic" : "crew")">
+                <div class="astra-member__heading">
+                    <span class="astra-member__avatar" aria-hidden="true">@member.Initials</span>
+                    <div class="astra-member__tools">
+                    <span class="astra-member__role">@(member.IsMedic ? "Medic" : "Crew")</span>
+                        <button type="button" class="astra-member__tool" data-bs-toggle="modal" data-bs-target="#edit-member-modal"
+                                data-member-edit data-member-id="@member.Id" data-first-name="@member.FirstName" data-middle-name="@member.MiddleName"
+                                data-last-name="@member.LastName" data-username="@member.Username" data-role="@member.Role"
+                                aria-label="Edit @member.FullName" title="Edit member">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 3 5 5M4 16l-1 5 5-1L21 7a2.1 2.1 0 0 0-5-3L4 16Z" /></svg>
+                        </button>
+                        <button type="button" class="astra-member__tool astra-member__tool--delete" data-bs-toggle="modal" data-bs-target="#delete-member-modal"
+                                data-member-delete data-member-id="@member.Id" data-member-name="@member.FullName"
+                                aria-label="Delete @member.FullName" title="Delete member">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></svg>
+                        </button>
+                    </div>
+                </div>
+                <p class="astra-member__feedback" role="status" aria-live="polite" aria-atomic="true" data-crew-feedback></p>
+                <h3>@member.FullName</h3>
+                <p class="astra-member__username">@member.Username</p>
+                <div class="astra-member__pin">
+                    @if (member.Pin is not null)
+                    {
+                        var pinId = $"pin-{member.Id}";
+                        <div>
+                            <label for="@pinId">Member PIN</label>
+                            <input id="@pinId" type="password" value="@member.Pin" readonly tabindex="-1" autocomplete="off" aria-label="PIN for @member.FullName" />
+                        </div>
+                        <div class="astra-member__actions">
+                            <button type="button" data-crew-reveal aria-controls="@pinId" aria-pressed="false" aria-label="Show PIN for @member.FullName" data-member-name="@member.FullName" hidden>
+                                <svg class="astra-eye astra-eye--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>
+                                <svg class="astra-eye astra-eye--closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m3 3 18 18M10.6 5.1 12 5c6.5 0 10 7 10 7a19 19 0 0 1-3.1 4M6.2 6.2A22 22 0 0 0 2 12s3.5 7 10 7a12 12 0 0 0 5.8-1.8M9.9 9.9a3 3 0 0 0 4.2 4.2" /></svg>
+                            </button>
+                            <button type="button" data-crew-copy aria-controls="@pinId" aria-label="Copy PIN for @member.FullName" hidden>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V4H4v12h4" /></svg>
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div><span class="astra-member__pin-label">Member PIN</span><span class="astra-member__unavailable">PIN unavailable</span></div>
+                    }
+                </div>
+            </article>
+        }
+    </div>
+    <div class="astra-roster__empty" data-crew-empty hidden="@(Model.Members.Count > 0)">
+        <span aria-hidden="true">✦</span>
+        <h3>@(Model.Members.Count == 0 ? "Your onboard team starts here" : "No matching members")</h3>
+        <p>@(Model.Members.Count == 0 ? "Crew members and medics will appear here once their accounts are added." : "Try a different name or choose another role.")</p>
+        <button type="button" class="btn astra-button astra-button--ghost" data-crew-reset hidden>Clear filters</button>
+    </div>
+</section>
+
+<div class="modal fade astra-member-modal" id="add-member-modal" tabindex="-1" aria-labelledby="add-member-heading"
+     aria-describedby="add-member-description" aria-hidden="true" data-open-on-load="@Model.OpenAddMember.ToString().ToLowerInvariant()">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <p class="astra-eyebrow">On-board personnel</p>
+                    <h2 class="modal-title" id="add-member-heading">Add member<span>.</span></h2>
+                </div>
+                <button type="button" class="astra-modal-close" data-bs-dismiss="modal" aria-label="Close add member dialog">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="add-member-description">All fields are required except middle name.</p>
+                <form asp-controller="Crew" asp-action="Create" method="post" data-add-member-form autocomplete="off">
+                    <div asp-validation-summary="ModelOnly" class="astra-modal-errors" role="alert"></div>
+                    <div class="astra-member-form__names">
+                        <div class="astra-member-form__field">
+                            <label asp-for="NewMember.FirstName">First name</label>
+                            <input asp-for="NewMember.FirstName" class="form-control" placeholder="First name" required aria-describedby="member-first-error" />
+                            <span asp-validation-for="NewMember.FirstName" id="member-first-error"></span>
+                        </div>
+                        <div class="astra-member-form__field">
+                            <label asp-for="NewMember.MiddleName">Middle name <span>Optional</span></label>
+                            <input asp-for="NewMember.MiddleName" class="form-control" placeholder="Middle name" />
+                        </div>
+                        <div class="astra-member-form__field">
+                            <label asp-for="NewMember.LastName">Last name</label>
+                            <input asp-for="NewMember.LastName" class="form-control" placeholder="Last name" required aria-describedby="member-last-error" />
+                            <span asp-validation-for="NewMember.LastName" id="member-last-error"></span>
+                        </div>
+                    </div>
+                    <div class="astra-member-form__field">
+                        <label asp-for="NewMember.Username">Username</label>
+                        <input asp-for="NewMember.Username" class="form-control" placeholder="Choose a unique username" maxlength="256" required aria-describedby="member-username-error" />
+                        <span asp-validation-for="NewMember.Username" id="member-username-error"></span>
+                    </div>
+                    <div class="astra-member-form__credentials">
+                        <div class="astra-member-form__field">
+                            <label asp-for="NewMember.Role">Role</label>
+                            <select asp-for="NewMember.Role" class="form-select" required aria-describedby="member-role-error">
+                                <option value="">Choose a role</option>
+                                <option value="Crew">Crew</option>
+                                <option value="Medic">Medic</option>
+                            </select>
+                            <span asp-validation-for="NewMember.Role" id="member-role-error"></span>
+                        </div>
+                        <aside class="astra-member-form__pin-note" aria-labelledby="auto-pin-heading">
+                            <span class="astra-member-form__pin-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="8" cy="8" r="5" /><path d="m11.5 11.5 9 9M16 16l3-3M19 19l2-2" />
+                                </svg>
+                            </span>
+                            <div>
+                                <h3 id="auto-pin-heading">PIN generated automatically</h3>
+                                <p>You can view it on the member’s card after adding them.</p>
+                            </div>
+                        </aside>
+                    </div>
+                    <div class="astra-member-form__footer">
+                        <button type="button" class="btn astra-button astra-member-form__cancel" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn astra-button astra-button--primary" data-add-member-submit>Add member</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade astra-member-modal" id="edit-member-modal" tabindex="-1" aria-labelledby="edit-member-heading"
+     aria-describedby="edit-member-description" aria-hidden="true" data-open-on-load="@Model.OpenEditMember.ToString().ToLowerInvariant()">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div><p class="astra-eyebrow">On-board personnel</p><h2 class="modal-title" id="edit-member-heading">Edit member<span>.</span></h2></div>
+                <button type="button" class="astra-modal-close" data-bs-dismiss="modal" aria-label="Close edit member dialog">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="edit-member-description">Update their details. Their current PIN will stay the same.</p>
+                <form asp-controller="Crew" asp-action="Edit" method="post" data-edit-member-form autocomplete="off">
+                    <input asp-for="EditedMember.Id" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="astra-modal-errors" role="alert"></div>
+                    <div class="astra-member-form__names">
+                        <div class="astra-member-form__field">
+                            <label asp-for="EditedMember.FirstName">First name</label>
+                            <input asp-for="EditedMember.FirstName" class="form-control" required aria-describedby="edit-first-error" />
+                            <span asp-validation-for="EditedMember.FirstName" id="edit-first-error"></span>
+                        </div>
+                        <div class="astra-member-form__field">
+                            <label asp-for="EditedMember.MiddleName">Middle name <span>Optional</span></label>
+                            <input asp-for="EditedMember.MiddleName" class="form-control" />
+                        </div>
+                        <div class="astra-member-form__field">
+                            <label asp-for="EditedMember.LastName">Last name</label>
+                            <input asp-for="EditedMember.LastName" class="form-control" required aria-describedby="edit-last-error" />
+                            <span asp-validation-for="EditedMember.LastName" id="edit-last-error"></span>
+                        </div>
+                    </div>
+                    <div class="astra-member-form__field">
+                        <label asp-for="EditedMember.Username">Username</label>
+                        <input asp-for="EditedMember.Username" class="form-control" maxlength="256" required aria-describedby="edit-username-error" />
+                        <span asp-validation-for="EditedMember.Username" id="edit-username-error"></span>
+                    </div>
+                    <div class="astra-member-form__field">
+                        <label asp-for="EditedMember.Role">Role</label>
+                        <select asp-for="EditedMember.Role" class="form-select" required aria-describedby="edit-role-error">
+                            <option value="Crew">Crew</option><option value="Medic">Medic</option>
+                        </select>
+                        <span asp-validation-for="EditedMember.Role" id="edit-role-error"></span>
+                    </div>
+                    <div class="astra-member-form__footer">
+                        <button type="button" class="btn astra-button astra-member-form__cancel" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn astra-button astra-button--primary" data-member-save>Save changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade astra-member-modal astra-delete-modal" id="delete-member-modal" tabindex="-1" aria-labelledby="delete-member-heading"
+     aria-describedby="delete-member-description" aria-hidden="true" data-open-on-load="@Model.OpenDeleteMember.ToString().ToLowerInvariant()">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div><p class="astra-eyebrow">On-board personnel</p><h2 class="modal-title" id="delete-member-heading">Delete member<span>?</span></h2></div>
+                <button type="button" class="astra-modal-close" data-bs-dismiss="modal" aria-label="Close delete member dialog">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-member-description">Remove <strong data-delete-member-name>@Model.DeleteMemberName</strong> from the onboard team?</p>
+                <p class="astra-delete-modal__warning">Their account and PIN will be deleted. This cannot be undone.</p>
+                <form asp-controller="Crew" asp-action="Delete" method="post" data-delete-member-form>
+                    <input asp-for="DeletedMember.Id" type="hidden" />
+                    <div asp-validation-summary="All" class="astra-modal-errors" role="alert"></div>
+                    <div class="astra-member-form__footer">
+                        <button type="button" class="btn astra-button astra-member-form__cancel" data-bs-dismiss="modal" data-delete-cancel>Keep member</button>
+                        <button type="submit" class="btn astra-button astra-button--danger" data-member-delete-submit>Delete member</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

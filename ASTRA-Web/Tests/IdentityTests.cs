@@ -19,6 +19,42 @@ namespace Tests;
 public class IdentityTests
 {
     [Fact]
+    public async Task RosterIsGroundControlOnlyAndListsOnboardMembersWithTheirOwnPins()
+    {
+        using var fixture = new IdentityFixture();
+        await IdentitySeeder.SeedAsync(fixture.Services, new ConfigurationBuilder().Build());
+        var members = fixture.Services.GetRequiredService<OnboardMemberService>();
+        var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
+        var actor = Principal("ground", AppRoles.GroundControl);
+        Assert.Empty(await members.GetMembersAsync(actor));
+        Assert.True((await members.CreateAsync(actor, "alex", AppRoles.Crew, "Alex", "Morgan", null)).Succeeded);
+        Assert.True((await members.CreateAsync(actor, "sam", AppRoles.Medic, "Sam", "Reed", "Avery")).Succeeded);
+        var ground = new ApplicationUser { UserName = "ground", IsGroundControl = true };
+        Assert.True((await users.CreateAsync(ground, "Ground-Control!2026")).Succeeded);
+        Assert.True((await users.AddToRoleAsync(ground, AppRoles.GroundControl)).Succeeded);
+        var roster = await members.GetMembersAsync(actor);
+        Assert.Equal(2, roster.Count);
+        Assert.Equal("Alex Morgan", roster[0].FullName);
+        Assert.Equal("AM", roster[0].Initials);
+        Assert.True(PinLookupService.IsPin(roster[0].Pin!));
+        Assert.False(roster[0].IsMedic);
+        Assert.Equal("Sam Avery Reed", roster[1].FullName);
+        Assert.True(PinLookupService.IsPin(roster[1].Pin!));
+        Assert.NotEqual(roster[0].Pin, roster[1].Pin);
+        Assert.True(roster[1].IsMedic);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetMembersAsync(Principal("alex", AppRoles.Crew)));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetMembersAsync(Principal("sam", AppRoles.Medic)));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetMembersAsync(new ClaimsPrincipal()));
+
+        var medic = (await users.FindByNameAsync("sam"))!;
+        medic.ProtectedPin = "unreadable-old-pin";
+        Assert.True((await users.UpdateAsync(medic)).Succeeded);
+        roster = await members.GetMembersAsync(actor);
+        Assert.Equal(2, roster.Count);
+        Assert.Null(roster.Single(member => member.Username == "sam").Pin);
+    }
+
+    [Fact]
     public async Task AccountCleanupDropsContactFieldsAndPreservesCredentialsAndRoleMembership()
     {
         using var connection = new SqliteConnection("Data Source=:memory:");
@@ -65,28 +101,38 @@ public class IdentityTests
         using var fixture = new IdentityFixture();
         var members = fixture.Services.GetRequiredService<OnboardMemberService>();
         var result = await members.CreateAsync(Principal("ground", AppRoles.GroundControl), "incomplete", role,
-            firstName!, lastName!, null, "012345");
+            firstName!, lastName!, null);
         Assert.Contains(result.Errors, item => item.Code == error);
         Assert.Empty(await fixture.Services.GetRequiredService<ApplicationDbContext>().Users.ToListAsync());
     }
 
     [Fact]
-    public async Task GroundControlSuppliedPinsAreValidatedWithoutCreatingPartialAccounts()
+    public async Task GeneratedPinsAreUniqueAndAuthenticateWithoutResettingExistingAccounts()
     {
         using var fixture = new IdentityFixture();
         await IdentitySeeder.SeedAsync(fixture.Services, new ConfigurationBuilder().Build());
         var members = fixture.Services.GetRequiredService<OnboardMemberService>();
         var actor = Principal("ground", AppRoles.GroundControl);
-        Assert.True((await members.CreateAsync(actor, "crew", AppRoles.Crew, "Alex", "Morgan", null, "001234")).Succeeded);
         var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
-        var crew = (await users.FindByNameAsync("crew"))!;
-        Assert.True(await users.CheckPasswordAsync(crew, "001234"));
-        Assert.Equal("001234", await members.GetPinAsync(actor, crew.Id));
-        var duplicate = await members.CreateAsync(actor, "medic", AppRoles.Medic, "Sam", "Reed", null, "001234");
-        Assert.Contains(duplicate.Errors, error => error.Code == "PinUnavailable");
-        var invalid = await members.CreateAsync(actor, "invalid", AppRoles.Crew, "Taylor", "Lee", null, "12345");
-        Assert.Contains(invalid.Errors, error => error.Code == "InvalidPin");
-        Assert.Equal(1, await users.Users.CountAsync());
+        var pins = new HashSet<string>();
+        for (var index = 0; index < 6; index++)
+        {
+            var role = index % 2 == 0 ? AppRoles.Crew : AppRoles.Medic;
+            Assert.True((await members.CreateAsync(actor, $"member-{index}", role, "Alex", "Morgan", null)).Succeeded);
+            var user = (await users.FindByNameAsync($"member-{index}"))!;
+            var pin = (await members.GetPinAsync(actor, user.Id))!;
+            Assert.True(PinLookupService.IsPin(pin));
+            Assert.True(pins.Add(pin));
+            Assert.True(await users.CheckPasswordAsync(user, pin));
+            Assert.NotEqual(pin, user.PasswordHash);
+            Assert.NotEqual(pin, user.ProtectedPin);
+        }
+        var original = (await users.FindByNameAsync("member-0"))!;
+        var originalPin = await members.GetPinAsync(actor, original.Id);
+        var duplicate = await members.CreateAsync(actor, "member-0", AppRoles.Crew, "Taylor", "Lee", null);
+        Assert.Contains(duplicate.Errors, error => error.Code == "DuplicateUserName");
+        Assert.Equal(originalPin, await members.GetPinAsync(actor, original.Id));
+        Assert.Equal(6, await users.Users.CountAsync());
     }
 
     [Fact]
@@ -207,8 +253,8 @@ public class IdentityTests
         var members = fixture.Services.GetRequiredService<OnboardMemberService>();
         var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
         var ground = Principal("ground", AppRoles.GroundControl);
-        Assert.True((await members.CreateAsync(ground, "crew", AppRoles.Crew, " Alex ", " Morgan ", null, "012345")).Succeeded);
-        Assert.True((await members.CreateAsync(ground, "medic", AppRoles.Medic, "Sam", "Reed", " Avery ", "654321")).Succeeded);
+        Assert.True((await members.CreateAsync(ground, "crew", AppRoles.Crew, " Alex ", " Morgan ", null)).Succeeded);
+        Assert.True((await members.CreateAsync(ground, "medic", AppRoles.Medic, "Sam", "Reed", " Avery ")).Succeeded);
         var crew = (await users.FindByNameAsync("crew"))!;
         var medic = (await users.FindByNameAsync("medic"))!;
         Assert.Null(crew.Email);
@@ -229,11 +275,74 @@ public class IdentityTests
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetPinAsync(Principal(medic.Id, AppRoles.Medic), crew.Id));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetPinAsync(Principal(crew.Id, AppRoles.Crew), medic.Id));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetPinAsync(new ClaimsPrincipal(), crew.Id));
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.CreateAsync(Principal(medic.Id, AppRoles.Medic), "unauthorized", AppRoles.Crew, "", "", null, "012345"));
-        Assert.False((await members.CreateAsync(ground, "invalid", AppRoles.GroundControl, "", "", null, "012345")).Succeeded);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.CreateAsync(Principal(medic.Id, AppRoles.Medic), "unauthorized", AppRoles.Crew, "", "", null));
+        Assert.False((await members.CreateAsync(ground, "invalid", AppRoles.GroundControl, "", "", null)).Succeeded);
         var replacement = new[] { "012345", "012346", "012347" }.First(candidate => candidate != pin && candidate != medicPin);
         Assert.True((await users.ChangePasswordAsync(crew, pin, replacement)).Succeeded);
         Assert.Equal(replacement, await members.GetPinAsync(ground, crew.Id));
+    }
+
+    [Fact]
+    public async Task EditingMemberUpdatesRoleAndDetailsWithoutChangingPin()
+    {
+        using var fixture = new IdentityFixture();
+        await IdentitySeeder.SeedAsync(fixture.Services, new ConfigurationBuilder().Build());
+        var members = fixture.Services.GetRequiredService<OnboardMemberService>();
+        var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
+        var ground = Principal("ground", AppRoles.GroundControl);
+        Assert.True((await members.CreateAsync(ground, "crew", AppRoles.Crew, "Alex", "Morgan", "Lee")).Succeeded);
+        var member = (await users.FindByNameAsync("crew"))!;
+        var pin = await members.GetPinAsync(ground, member.Id);
+        var hash = member.PasswordHash;
+        var protectedPin = member.ProtectedPin;
+        var lookup = member.PinLookup;
+        var stamp = member.SecurityStamp;
+
+        Assert.True((await members.UpdateAsync(ground, member.Id, " medic ", AppRoles.Medic, " Sam ", " Reed ", " ")).Succeeded);
+        var updated = (await users.FindByNameAsync("medic"))!;
+        Assert.Equal("Sam", updated.FirstName);
+        Assert.Equal("Reed", updated.LastName);
+        Assert.Null(updated.MiddleName);
+        Assert.Equal(new[] { AppRoles.Medic }, await users.GetRolesAsync(updated));
+        Assert.NotEqual(stamp, updated.SecurityStamp);
+        Assert.Equal(hash, updated.PasswordHash);
+        Assert.Equal(protectedPin, updated.ProtectedPin);
+        Assert.Equal(lookup, updated.PinLookup);
+        Assert.Equal(pin, await members.GetPinAsync(ground, member.Id));
+        Assert.True(await users.CheckPasswordAsync(updated, pin!));
+    }
+
+    [Fact]
+    public async Task InvalidEditsRollBackAndOnlyGroundControlCanManageOnboardMembers()
+    {
+        using var fixture = new IdentityFixture();
+        await IdentitySeeder.SeedAsync(fixture.Services, new ConfigurationBuilder().Build());
+        var members = fixture.Services.GetRequiredService<OnboardMemberService>();
+        var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
+        var ground = Principal("ground", AppRoles.GroundControl);
+        Assert.True((await members.CreateAsync(ground, "crew", AppRoles.Crew, "Alex", "Morgan", null)).Succeeded);
+        Assert.True((await members.CreateAsync(ground, "medic", AppRoles.Medic, "Sam", "Reed", null)).Succeeded);
+        var member = (await users.FindByNameAsync("crew"))!;
+        Assert.False((await members.UpdateAsync(ground, member.Id, "medic", AppRoles.Medic, "Changed", "Name", null)).Succeeded);
+        var unchanged = (await users.FindByIdAsync(member.Id))!;
+        Assert.Equal("crew", unchanged.UserName);
+        Assert.Equal("Alex", unchanged.FirstName);
+        Assert.Equal(new[] { AppRoles.Crew }, await users.GetRolesAsync(unchanged));
+        Assert.False((await members.UpdateAsync(ground, member.Id, "crew", AppRoles.Crew, " ", "Morgan", null)).Succeeded);
+        Assert.False((await members.UpdateAsync(ground, member.Id, "crew", AppRoles.GroundControl, "Alex", "Morgan", null)).Succeeded);
+        foreach (var actor in new[] { Principal(member.Id, AppRoles.Crew), Principal("medic", AppRoles.Medic), new ClaimsPrincipal() })
+        {
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.UpdateAsync(actor, member.Id, "crew", AppRoles.Crew, "Alex", "Morgan", null));
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.DeleteAsync(actor, member.Id));
+        }
+        var groundAccount = new ApplicationUser { UserName = "control", IsGroundControl = true };
+        Assert.True((await users.CreateAsync(groundAccount, "Ground-Control!2026")).Succeeded);
+        Assert.False((await members.UpdateAsync(ground, groundAccount.Id, "control", AppRoles.Crew, "Alex", "Morgan", null)).Succeeded);
+        Assert.False((await members.DeleteAsync(ground, groundAccount.Id)).Succeeded);
+        Assert.True((await members.DeleteAsync(ground, member.Id)).Succeeded);
+        Assert.Null(await users.FindByIdAsync(member.Id));
+        Assert.False((await members.DeleteAsync(ground, member.Id)).Succeeded);
+        Assert.NotNull(await users.FindByNameAsync("medic"));
     }
 
     private static ClaimsPrincipal Principal(string id, string role) => new(new ClaimsIdentity([

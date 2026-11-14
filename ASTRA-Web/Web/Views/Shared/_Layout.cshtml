@@ -1,3 +1,14 @@
+@using Common.Identity
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var isGroundControl = isAuthenticated && User.IsInRole(AppRoles.GroundControl);
+    var overviewController = isGroundControl ? "Crew" : "Home";
+    var overviewAction = isAuthenticated && !isGroundControl ? "Dashboard" : "Index";
+    var overviewLabel = isGroundControl ? "Crew Overview" : isAuthenticated ? "Dashboard" : "Home";
+    var overviewActive = ViewContext.RouteData.Values["controller"]?.ToString() == overviewController
+        && (ViewContext.RouteData.Values["action"]?.ToString() == overviewAction
+            || (isGroundControl && ViewContext.RouteData.Values["action"]?.ToString() is "Create" or "Edit" or "Delete"));
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +21,7 @@
 </head>
 <body class="@(ViewData["CoverPage"] is true ? "astra-cover-page" : "")">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark astra-navbar" aria-label="Main navigation">
+        <nav class="navbar navbar-expand-lg navbar-dark astra-navbar" aria-label="Main navigation">
             <div class="container-fluid astra-shell">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
                     <span class="astra-brand-mark" aria-hidden="true"></span><span>ASTRA</span>
@@ -21,7 +32,7 @@
                         <path d="M4 8h16" /><path d="M4 16h16" />
                     </svg>
                 </button>
-                <div id="astra-navigation" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <div id="astra-navigation" class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <div class="nav-item">
@@ -30,8 +41,8 @@
                     }
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link astra-navbar__home" asp-area="" asp-controller="Home" asp-action="Index"
-                               aria-current="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "page" : null)"><span class="astra-nav-label">@(User.Identity?.IsAuthenticated == true ? "Dashboard" : "Home")</span></a>
+                            <a class="nav-link astra-navbar__home" asp-area="" asp-controller="@overviewController" asp-action="@overviewAction"
+                               aria-current="@(overviewActive ? "page" : null)"><span class="astra-nav-label">@overviewLabel</span></a>
                         </li>
                     </ul>
                     <partial name="_LoginPartial" />
