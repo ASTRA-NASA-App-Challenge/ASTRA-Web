@@ -17,9 +17,17 @@
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#astra-navigation" aria-controls="astra-navigation"
                         aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+                    <svg class="astra-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false">
+                        <path d="M4 8h16" /><path d="M4 16h16" />
+                    </svg>
                 </button>
                 <div id="astra-navigation" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="nav-item">
+                            <span class="astra-navbar__username">@User.Identity?.Name</span>
+                        </div>
+                    }
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link astra-navbar__home" asp-area="" asp-controller="Home" asp-action="Index"
