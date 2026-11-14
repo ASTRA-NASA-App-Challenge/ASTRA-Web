@@ -427,3 +427,10 @@ FodyWeavers.xsd
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
 /ASTRA-Web/.idea
+
+
+#DB Temporary files
+*.db-shm
+*.db-wal
+*.sqlite-shm
+*.sqlite-wal
