@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Common.Identity;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Web.Identity;

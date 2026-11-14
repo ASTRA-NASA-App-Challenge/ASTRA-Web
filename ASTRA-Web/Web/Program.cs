@@ -1,11 +1,14 @@
+using Common.Identity;
+using Data;
+using Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Web.Data;
 using Web.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.DataProtection;
+using Services.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +24,7 @@ var connectionString = sqliteConnection.ToString();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+builder.Services.AddScoped<Services.Personnel.IOnboardPersonnelService, Services.Personnel.OnboardPersonnelService>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     {

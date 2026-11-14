@@ -1,6 +1,10 @@
+using Common.Identity;
+using Entities.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Web.Identity;
+namespace Services.Identity;
 
 public static class IdentitySeeder
 {

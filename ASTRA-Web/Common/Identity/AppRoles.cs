@@ -1,4 +1,4 @@
-namespace Web.Identity;
+namespace Common.Identity;
 
 public static class AppRoles
 {

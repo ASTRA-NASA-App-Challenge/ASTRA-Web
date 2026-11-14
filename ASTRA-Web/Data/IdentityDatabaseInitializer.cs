@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Web.Data;
+namespace Data;
 
 public static class IdentityDatabaseInitializer
 {

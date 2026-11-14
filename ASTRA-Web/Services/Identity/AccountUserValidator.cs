@@ -1,6 +1,7 @@
+using Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 
-namespace Web.Identity;
+namespace Services.Identity;
 
 public sealed class AccountUserValidator : UserValidator<ApplicationUser>
 {

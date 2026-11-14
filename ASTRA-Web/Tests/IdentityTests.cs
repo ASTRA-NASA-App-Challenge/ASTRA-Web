@@ -1,13 +1,16 @@
 using System.Security.Claims;
+using Common.Identity;
+using Data;
+using Entities.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Web.Data;
 using Web.Identity;
 using Microsoft.AspNetCore.DataProtection;
+using Services.Identity;
 
 namespace Tests;
 

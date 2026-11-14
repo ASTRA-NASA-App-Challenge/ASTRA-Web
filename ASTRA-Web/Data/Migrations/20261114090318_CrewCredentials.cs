@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace Web.Data.Migrations
+namespace Data.Migrations
 {
     /// <inheritdoc />
     public partial class CrewCredentials : Migration

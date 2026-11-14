@@ -1,3 +1,4 @@
+@model Common.Models.OnboardPersonnelCounts
 @{
     ViewData["Title"] = "ASTRA | Astronaut Health";
     ViewData["FullWidth"] = true;
@@ -27,14 +28,14 @@
                     <div class="astra-cover__status-item">
                         <span class="astra-cover__status-dot" aria-hidden="true"></span>
                         <span>
-                            <strong>12</strong>
+                            <strong>@Model.Crew.ToString("D2")</strong>
                             Astronauts
                         </span>
                     </div>
                     <div class="astra-cover__status-item">
                         <span class="astra-cover__status-dot astra-cover__status-dot--medic" aria-hidden="true"></span>
                         <span>
-                            <strong>04</strong>
+                            <strong>@Model.Medics.ToString("D2")</strong>
                             Medics
                         </span>
                     </div>

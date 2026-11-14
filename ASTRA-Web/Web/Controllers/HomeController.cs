@@ -1,14 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using Web.Models;
+using Services.Personnel;
 
 namespace Web.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController(IOnboardPersonnelService personnel) : Controller
     {
-        public IActionResult Index()
+        public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
-            return View();
+            return View(await personnel.GetCountsAsync(cancellationToken));
         }
 
         public IActionResult Privacy()

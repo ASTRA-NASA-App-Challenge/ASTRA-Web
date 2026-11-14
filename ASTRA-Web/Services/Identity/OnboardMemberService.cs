@@ -1,12 +1,15 @@
 using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using Common.Identity;
+using Data;
+using Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Web.Data;
 
-namespace Web.Identity;
+
+namespace Services.Identity;
 
 // Used by the future ground-control admin panel. Authorization is enforced here as well as in the UI.
 public sealed class OnboardMemberService(ApplicationDbContext db, UserManager<ApplicationUser> users,

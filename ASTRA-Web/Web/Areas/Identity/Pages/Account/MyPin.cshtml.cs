@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using Common.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Services.Identity;
 using Web.Identity;
 
 namespace Web.Areas.Identity.Pages.Account;
