@@ -40,6 +40,298 @@ main {
   color: #f4f7fb;
 }
 
+.astra-dashboard {
+  max-width: 1280px;
+  min-height: calc(100vh - 138px);
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 4.5rem) clamp(1.5rem, 5vw, 4rem);
+}
+
+.astra-dashboard__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.astra-dashboard__header h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.2rem, 5vw, 4.5rem);
+  letter-spacing: -0.07em;
+}
+
+.astra-dashboard__layout {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.7fr) minmax(0, 1.8fr);
+  gap: 1rem;
+}
+
+.astra-dashboard__main {
+  display: grid;
+  gap: 1rem;
+}
+
+.astra-dashboard__card {
+  border: 1px solid rgba(145, 221, 255, 0.16);
+  border-radius: 0.35rem;
+  background: #102238;
+}
+
+.astra-dashboard__card-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.astra-dashboard__card-heading h2,
+.astra-dashboard__profile h2,
+.astra-dashboard__notice h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.astra-dashboard__card-heading span {
+  color: rgba(235, 243, 251, 0.48);
+  font-size: 0.7rem;
+}
+
+.astra-dashboard__card--stats {
+  padding: 1.5rem;
+}
+
+.astra-dashboard__chart {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: end;
+  gap: 0.45rem;
+  height: 190px;
+  overflow: visible;
+  margin: 2rem 0 1.5rem;
+  padding: 0 0.25rem 0.5rem;
+  border-bottom: 1px solid rgba(145, 221, 255, 0.18);
+}
+
+.astra-dashboard__chart span {
+  position: relative;
+  z-index: 0;
+  flex: 1;
+  min-height: 12px;
+  border-radius: 0;
+  background: #91ddff;
+  cursor: help;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.astra-dashboard__chart span::after {
+  position: absolute;
+  bottom: calc(100% + 0.6rem);
+  left: 50%;
+  z-index: 100;
+  width: max-content;
+  max-width: 10rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(145, 221, 255, 0.35);
+  border-radius: 0.25rem;
+  background: #07111f;
+  color: #f4f7fb;
+  content: attr(data-chart-tooltip);
+  font-size: 0.7rem;
+  line-height: 1.2;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0.3rem);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.astra-dashboard__chart span.is-tooltip-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.astra-dashboard__chart span.is-tooltip-visible {
+  z-index: 3;
+}
+
+.astra-dashboard__chart span:hover,
+.astra-dashboard__chart span:focus-visible {
+  background: #c5efff;
+  transform: translateY(-3px);
+}
+
+.astra-dashboard__legend {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(145, 221, 255, 0.1);
+  color: rgba(235, 243, 251, 0.6);
+  font-size: 0.8rem;
+}
+
+.astra-dashboard__legend strong {
+  color: #fff;
+}
+
+.astra-dashboard__profile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.35rem 1.5rem;
+}
+
+.astra-avatar {
+  display: grid;
+  flex: 0 0 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #91ddff;
+  color: #07111f;
+  font-weight: 800;
+}
+
+.astra-dashboard__profile .astra-eyebrow {
+  margin-bottom: 0.35rem;
+}
+
+.astra-dashboard__profile h2 {
+  font-size: clamp(1rem, 2vw, 1.4rem);
+}
+
+.astra-dashboard__profile p:not(.astra-eyebrow) {
+  margin: 0.3rem 0 0;
+  color: rgba(235, 243, 251, 0.58);
+  font-size: 0.8rem;
+}
+
+.astra-dashboard__profile-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: auto;
+  color: #91ddff;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.astra-dashboard__profile-link span {
+  color: rgba(235, 243, 251, 0.5);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.astra-dashboard__profile-link strong {
+  color: #fff;
+  font-family: monospace;
+  font-size: 1.15rem;
+  letter-spacing: 0.12em;
+}
+
+.astra-dashboard__info {
+  padding: 1.5rem;
+}
+
+.astra-dashboard__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+.astra-dashboard__metrics > div {
+  padding: 1rem;
+  border-radius: 0.2rem;
+  background: #0b1a2b;
+}
+
+.astra-dashboard__metrics span,
+.astra-dashboard__metrics em {
+  display: block;
+  color: rgba(235, 243, 251, 0.55);
+  font-size: 0.7rem;
+  font-style: normal;
+}
+
+.astra-dashboard__metrics strong {
+  display: block;
+  margin: 0.7rem 0 0.35rem;
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.astra-dashboard__metrics small {
+  color: rgba(235, 243, 251, 0.55);
+  font-size: 0.65rem;
+}
+
+.astra-dashboard__metrics .astra-metric-good {
+  color: #a7f3c1;
+}
+
+.astra-dashboard__notice {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-color: rgba(145, 221, 255, 0.3);
+}
+
+.astra-dashboard__notice-icon {
+  color: #91ddff;
+  font-size: 1.5rem;
+}
+
+.astra-dashboard__notice p {
+  margin: 0.35rem 0 0;
+  color: rgba(235, 243, 251, 0.62);
+  font-size: 0.8rem;
+}
+
+.astra-dashboard__notice .astra-button {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .astra-dashboard__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .astra-dashboard__metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .astra-dashboard__header {
+    display: block;
+  }
+
+  .astra-dashboard__profile {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .astra-dashboard__profile-link {
+    width: 100%;
+    margin-left: 4.5rem;
+  }
+
+  .astra-dashboard__notice {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .astra-dashboard__notice .astra-button {
+    margin-left: 2.5rem;
+  }
+}
+
 .astra-simple-home {
   display: flex;
   min-height: calc(100vh - 138px);
@@ -415,6 +707,11 @@ label {
   font-size: 0.9rem;
 }
 
+.astra-navbar .astra-navbar__logout {
+  padding: 0.45rem 1.25rem;
+  font-size: 0.9rem;
+}
+
 .astra-navbar .navbar-toggler {
   border-color: rgba(145, 221, 255, 0.25);
 }
@@ -473,6 +770,11 @@ label {
 
   .astra-navbar .astra-navbar__login {
     display: inline-flex;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .astra-navbar .astra-navbar__logout {
     width: 100%;
     margin-top: 0.5rem;
   }

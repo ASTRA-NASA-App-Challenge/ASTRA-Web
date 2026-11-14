@@ -46,3 +46,10 @@ if (loginForm) {
         label.textContent = "Login";
     });
 }
+
+document.querySelectorAll("[data-chart-tooltip]").forEach((bar) => {
+    bar.addEventListener("mouseenter", () => bar.classList.add("is-tooltip-visible"));
+    bar.addEventListener("mouseleave", () => bar.classList.remove("is-tooltip-visible"));
+    bar.addEventListener("focus", () => bar.classList.add("is-tooltip-visible"));
+    bar.addEventListener("blur", () => bar.classList.remove("is-tooltip-visible"));
+});

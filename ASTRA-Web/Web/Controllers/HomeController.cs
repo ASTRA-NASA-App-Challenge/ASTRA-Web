@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using Web.Models;
 using Services.Personnel;
+using Common.Identity;
 
 namespace Web.Controllers
 {
@@ -9,7 +10,17 @@ namespace Web.Controllers
     {
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
+            if (User.Identity?.IsAuthenticated == true
+                && (User.IsInRole(AppRoles.Crew) || User.IsInRole(AppRoles.Medic)))
+                return RedirectToAction(nameof(Dashboard));
+
             return View(await personnel.GetCountsAsync(cancellationToken));
+        }
+
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = AppRoles.Crew + "," + AppRoles.Medic)]
+        public IActionResult Dashboard()
+        {
+            return View();
         }
 
         public IActionResult Privacy()

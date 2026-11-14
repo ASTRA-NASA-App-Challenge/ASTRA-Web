@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "Astronaut dashboard";
+}
+
+<section class="astra-dashboard" aria-labelledby="dashboard-heading">
+    <header class="astra-dashboard__header">
+        <div>
+            <p class="astra-eyebrow">Crew health console</p>
+            <h1 id="dashboard-heading">Welcome back, Alex.</h1>
+        </div>
+    </header>
+
+    <div class="astra-dashboard__layout">
+        <aside class="astra-dashboard__card astra-dashboard__card--stats">
+            <div class="astra-dashboard__card-heading">
+                <h2>My statistics</h2>
+                <span>Last 7 days</span>
+            </div>
+            <div class="astra-dashboard__chart" aria-label="Health trend example chart">
+                <span style="height: 34%" data-chart-tooltip="Monday: 62 bpm" tabindex="0" aria-label="Monday: 62 beats per minute"></span>
+                <span style="height: 48%" data-chart-tooltip="Tuesday: 66 bpm" tabindex="0" aria-label="Tuesday: 66 beats per minute"></span>
+                <span style="height: 42%" data-chart-tooltip="Wednesday: 64 bpm" tabindex="0" aria-label="Wednesday: 64 beats per minute"></span>
+                <span style="height: 67%" data-chart-tooltip="Thursday: 70 bpm" tabindex="0" aria-label="Thursday: 70 beats per minute"></span>
+                <span style="height: 58%" data-chart-tooltip="Friday: 68 bpm" tabindex="0" aria-label="Friday: 68 beats per minute"></span>
+                <span style="height: 78%" data-chart-tooltip="Saturday: 72 bpm" tabindex="0" aria-label="Saturday: 72 beats per minute"></span>
+                <span style="height: 72%" data-chart-tooltip="Sunday: 68 bpm" tabindex="0" aria-label="Sunday: 68 beats per minute"></span>
+            </div>
+            <div class="astra-dashboard__legend"><span>Heart rate</span><strong>68 bpm</strong></div>
+            <div class="astra-dashboard__legend"><span>Sleep</span><strong>7h 42m</strong></div>
+            <div class="astra-dashboard__legend"><span>Mood</span><strong>Good</strong></div>
+        </aside>
+
+        <div class="astra-dashboard__main">
+            <article class="astra-dashboard__card astra-dashboard__profile">
+                <div class="astra-avatar" aria-hidden="true">BM</div>
+                <div>
+                    <p class="astra-eyebrow">Crew member</p>
+                    <h2>Berk Boyanov Manolov</h2>
+                    <p>@User.Identity?.Name</p>
+                </div>
+                <div class="astra-dashboard__profile-link">
+                    <span>PIN</span>
+                    <strong>123456</strong>
+                </div>
+            </article>
+
+            <article class="astra-dashboard__card astra-dashboard__info">
+                <div class="astra-dashboard__card-heading">
+                    <h2>Latest health information</h2>
+                    <span>Today, 08:42 UTC</span>
+                </div>
+                <div class="astra-dashboard__metrics">
+                    <div><span>Blood pressure</span><strong>118/76 <small>mmHg</small></strong><em class="astra-metric-good">Normal</em></div>
+                    <div><span>Body temperature</span><strong>36.7 <small>°C</small></strong><em class="astra-metric-good">Normal</em></div>
+                    <div><span>Blood oxygen</span><strong>98 <small>%</small></strong><em class="astra-metric-good">Normal</em></div>
+                    <div><span>Stress level</span><strong>Low</strong><em class="astra-metric-good">On track</em></div>
+                </div>
+            </article>
+
+            <article class="astra-dashboard__card astra-dashboard__notice">
+                <span class="astra-dashboard__notice-icon" aria-hidden="true">✦</span>
+                <div>
+                    <h2>Next check-in</h2>
+                    <p>Your daily health assessment is due in <strong>04:18:32</strong>.</p>
+                </div>
+                <button class="btn astra-button astra-button--primary" type="button">Start check-in</button>
+            </article>
+        </div>
+    </div>
+</section>

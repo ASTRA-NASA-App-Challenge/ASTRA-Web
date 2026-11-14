@@ -97,6 +97,33 @@ using (var scope = app.Services.CreateScope())
         {
             throw new InvalidOperationException("The local ground-control username is already used by another account.");
         }
+
+        const string astronautUsername = "ASTRA Test Astronaut";
+        var astronaut = await users.FindByNameAsync(astronautUsername);
+        if (astronaut is null)
+        {
+            astronaut = new ApplicationUser
+            {
+                UserName = astronautUsername,
+                FirstName = "Berk",
+                MiddleName = "Boyanov",
+                LastName = "Manolov",
+                IsGroundControl = false
+            };
+            var created = await users.CreateAsync(astronaut, "123456");
+            if (!created.Succeeded)
+                throw new InvalidOperationException(string.Join("; ", created.Errors.Select(error => error.Description)));
+            var assigned = await users.AddToRoleAsync(astronaut, AppRoles.Crew);
+            if (!assigned.Succeeded)
+            {
+                await users.DeleteAsync(astronaut);
+                throw new InvalidOperationException(string.Join("; ", assigned.Errors.Select(error => error.Description)));
+            }
+        }
+        else if (astronaut.IsGroundControl || !await users.IsInRoleAsync(astronaut, AppRoles.Crew))
+        {
+            throw new InvalidOperationException("The local astronaut username is already used by another account.");
+        }
     }
 }
 
