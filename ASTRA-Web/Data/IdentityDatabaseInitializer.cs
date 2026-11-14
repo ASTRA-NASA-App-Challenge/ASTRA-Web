@@ -24,7 +24,10 @@ public static class IdentityDatabaseInitializer
                     VALUES ('20261114090055_InitialIdentity', '10.0.15');
                     """);
             }
-            await db.Database.MigrateAsync();
+            // MigrateAsync acquires a SQLite migration lock even when no schema changes
+            // are pending. Avoid those writes on ordinary restarts.
+            if ((await db.Database.GetPendingMigrationsAsync()).Any())
+                await db.Database.MigrateAsync();
         }
         finally
         {

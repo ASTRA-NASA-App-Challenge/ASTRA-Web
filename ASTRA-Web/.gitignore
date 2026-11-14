@@ -1,0 +1,5 @@
+# Local runtime database: keep it across restarts, but do not distribute live data in Git.
+/Web/astra.db
+/Web/astra.db-wal
+/Web/astra.db-shm
+/Web/astra.db-journal
