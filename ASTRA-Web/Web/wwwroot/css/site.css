@@ -23,6 +23,202 @@ body {
   color: #f4f7fb;
 }
 
+main {
+  color: #f4f7fb;
+}
+
+.astra-simple-home {
+  display: flex;
+  min-height: calc(100vh - 138px);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.astra-cover {
+  --horizon-position: 0.5;
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - 138px);
+  overflow: hidden;
+  background: #020711;
+}
+
+.astra-cover__space,
+.astra-cover__shade {
+  position: absolute;
+  inset: -4%;
+  pointer-events: none;
+}
+
+.astra-cover__space {
+  z-index: -4;
+  background:
+    url("https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=2400&q=85")
+    center / cover no-repeat;
+  transform: translateX(calc((var(--horizon-position) - 0.5) * -2%)) scale(1.04);
+  transition: transform 120ms ease-out;
+}
+
+.astra-cover__shade {
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(2, 7, 17, 0.94) 0%, rgba(2, 7, 17, 0.72) 42%, rgba(2, 7, 17, 0.18) 100%),
+    linear-gradient(0deg, rgba(2, 7, 17, 0.85), transparent 58%);
+}
+
+.astra-cover__content {
+  max-width: 700px;
+  padding: clamp(4rem, 12vh, 8rem) clamp(1.5rem, 8vw, 8rem);
+}
+
+.astra-cover h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(4.5rem, 13vw, 10rem);
+  letter-spacing: -0.1em;
+  line-height: 0.82;
+}
+
+.astra-cover__tagline {
+  margin: 1.75rem 0 0;
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 3.8rem);
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  line-height: 0.98;
+}
+
+.astra-cover__tagline span {
+  color: #91ddff;
+}
+
+.astra-cover__description {
+  max-width: 520px;
+  margin: 1.75rem 0 2rem;
+  color: rgba(235, 243, 251, 0.78);
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+
+.astra-cover__status {
+  display: flex;
+  width: min(100%, 430px);
+  flex-direction: column;
+  border: 1px solid rgba(145, 221, 255, 0.22);
+  border-radius: 0.65rem;
+  background: rgba(7, 17, 31, 0.62);
+  backdrop-filter: blur(8px);
+  margin: 1.25rem 0 0;
+  padding: 0.85rem 1rem;
+}
+
+.astra-cover__status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: rgba(235, 243, 251, 0.68);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.astra-cover__status-item + .astra-cover__status-item {
+  border-top: 1px solid rgba(145, 221, 255, 0.18);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.astra-cover__status-item strong {
+  display: block;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.astra-cover__status-dot {
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #64e391;
+  box-shadow: 0 0 0.65rem rgba(100, 227, 145, 0.8);
+}
+
+.astra-cover__status-dot--medic {
+  background: #91ddff;
+  box-shadow: 0 0 0.65rem rgba(145, 221, 255, 0.8);
+}
+
+.astra-cover__hint {
+  margin: 3rem 0 0;
+  color: rgba(235, 243, 251, 0.55);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.astra-cover__hint span {
+  color: #91ddff;
+  margin: 0 0.5rem;
+}
+
+.astra-simple-home h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(4rem, 12vw, 8rem);
+  letter-spacing: -0.08em;
+  line-height: 0.9;
+}
+
+.astra-simple-home > p:not(.astra-eyebrow) {
+  max-width: 560px;
+  margin: 1.5rem 0 2rem;
+  color: rgba(235, 243, 251, 0.72);
+  font-size: 1.15rem;
+  line-height: 1.7;
+}
+
+.form-control,
+.form-select {
+  border-color: rgba(145, 221, 255, 0.2);
+  background-color: #101f32;
+  color: #f4f7fb;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #91ddff;
+  background-color: #101f32;
+  color: #fff;
+  box-shadow: 0 0 0 0.2rem rgba(145, 221, 255, 0.15);
+}
+
+.form-control::placeholder {
+  color: rgba(235, 243, 251, 0.45);
+}
+
+.form-label,
+label {
+  color: rgba(235, 243, 251, 0.78);
+}
+
+.text-muted {
+  color: rgba(235, 243, 251, 0.58) !important;
+}
+
+.astra-account {
+  max-width: 720px;
+  min-height: calc(100vh - 138px);
+  padding: clamp(2rem, 5vw, 4.5rem) 0;
+}
+
+.astra-account h1 {
+  color: #fff;
+}
+
 .astra-navbar {
   border-bottom: 1px solid rgba(145, 221, 255, 0.16);
   background: #07111f;

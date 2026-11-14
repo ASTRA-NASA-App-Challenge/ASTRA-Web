@@ -1,0 +1,25 @@
+@page
+@model Web.Areas.Identity.Pages.Account.Manage.IndexModel
+@{
+    ViewData["Title"] = "Account settings";
+}
+
+<section class="astra-account" aria-labelledby="account-heading">
+    <p class="astra-eyebrow">Crew profile</p>
+    <h1 id="account-heading">Account settings</h1>
+    <p class="text-muted">Manage the details used to identify you during your mission.</p>
+
+    <form class="mt-4" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3">
+            <label asp-for="Input.Username" class="form-label"></label>
+            <input asp-for="Input.Username" class="form-control" disabled />
+        </div>
+        <div class="mb-3">
+            <label asp-for="Input.Email" class="form-label"></label>
+            <input asp-for="Input.Email" class="form-control" autocomplete="email" />
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn astra-button astra-button--primary">Save changes</button>
+    </form>
+</section>

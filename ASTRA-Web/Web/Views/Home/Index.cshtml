@@ -1,55 +1,41 @@
-﻿@{
+@{
     ViewData["Title"] = "ASTRA | Astronaut Health";
     ViewData["FullWidth"] = true;
 }
 
-<section class="astra-hero" aria-labelledby="astra-heading">
-    <img class="astra-hero__image"
-         src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&amp;fit=crop&amp;w=2400&amp;q=85"
-         alt=""
-         aria-hidden="true"/>
-    <div class="astra-hero__overlay" aria-hidden="true"></div>
+@if (User.Identity?.IsAuthenticated != true)
+{
+    <main class="astra-cover" data-space-cover>
+        <div class="astra-cover__space" aria-hidden="true"></div>
+        <div class="astra-cover__shade" aria-hidden="true"></div>
 
-    <div class="page-body">
-        <div class="astra-hero__content">
+        <section class="astra-cover__content" aria-labelledby="cover-heading">
             <p class="astra-eyebrow">Human health, beyond Earth</p>
-            <h1 id="astra-heading">Stay mission-ready.<br/><span>Wherever you go.</span></h1>
-            <p class="astra-hero__lead">
-                ASTRA helps astronauts understand their health at a glance, track vital indicators,
-                and take the right action before small changes become mission-critical.
+            <h1 id="cover-heading">ASTRA</h1>
+            <p class="astra-cover__tagline">Stay mission-ready.<br /><span>Beyond Earth.</span></p>
+            <p class="astra-cover__description">
+                A simple health companion for astronauts. Track vital indicators,
+                understand mission risks, and stay ready for the journey ahead.
             </p>
-            <div class="astra-hero__actions">
-                <a class="btn astra-button astra-button--primary" href="#health-check">Begin health check</a>
-                <a class="btn astra-button astra-button--ghost" href="#about-astra">Explore ASTRA <span
-                        aria-hidden="true">→</span></a>
+            <a class="btn astra-button astra-button--primary"
+               asp-area="Identity"
+               asp-page="/Account/Login">Sign in</a>
+            <div class="astra-cover__status" aria-label="Current mission personnel">
+                <div class="astra-cover__status-item">
+                    <span class="astra-cover__status-dot" aria-hidden="true"></span>
+                    <span>
+                        <strong>12</strong>
+                        Astronauts
+                    </span>
+                </div>
+                <div class="astra-cover__status-item">
+                    <span class="astra-cover__status-dot astra-cover__status-dot--medic" aria-hidden="true"></span>
+                    <span>
+                        <strong>04</strong>
+                        Medics
+                    </span>
+                </div>
             </div>
-            <p class="astra-hero__note"><span aria-hidden="true">✦</span> Built for the five hazards of human
-                spaceflight</p>
-        </div>
-
-        <div class="astra-hero__stats" id="health-check" aria-label="ASTRA health indicators">
-            <div>
-                <strong>05</strong>
-                <span>Mission hazards</span>
-            </div>
-            <div>
-                <strong>24/7</strong>
-                <span>Personal insight</span>
-            </div>
-            <div>
-                <strong>01</strong>
-                <span>Healthier mission</span>
-            </div>
-        </div>
-    </div>
-
-</section>
-
-<section class="astra-intro" id="about-astra" aria-labelledby="about-heading">
-    <p class="astra-eyebrow">Your health is mission control</p>
-    <h2 id="about-heading">Read the signals.<br/>Protect the journey.</h2>
-    <p>
-        From blood pressure and heart rate to sleep and mood, ASTRA brings the signals that matter
-        together in one clear, human-centered view.
-    </p>
-</section>
+        </section>
+    </main>
+}
