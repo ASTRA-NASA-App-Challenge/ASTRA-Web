@@ -1,8 +1,55 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "ASTRA | Astronaut Health";
+    ViewData["FullWidth"] = true;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="astra-hero" aria-labelledby="astra-heading">
+    <img class="astra-hero__image"
+         src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&amp;fit=crop&amp;w=2400&amp;q=85"
+         alt=""
+         aria-hidden="true"/>
+    <div class="astra-hero__overlay" aria-hidden="true"></div>
+
+    <div class="page-body">
+        <div class="astra-hero__content">
+            <p class="astra-eyebrow">Human health, beyond Earth</p>
+            <h1 id="astra-heading">Stay mission-ready.<br/><span>Wherever you go.</span></h1>
+            <p class="astra-hero__lead">
+                ASTRA helps astronauts understand their health at a glance, track vital indicators,
+                and take the right action before small changes become mission-critical.
+            </p>
+            <div class="astra-hero__actions">
+                <a class="btn astra-button astra-button--primary" href="#health-check">Begin health check</a>
+                <a class="btn astra-button astra-button--ghost" href="#about-astra">Explore ASTRA <span
+                        aria-hidden="true">→</span></a>
+            </div>
+            <p class="astra-hero__note"><span aria-hidden="true">✦</span> Built for the five hazards of human
+                spaceflight</p>
+        </div>
+
+        <div class="astra-hero__stats" id="health-check" aria-label="ASTRA health indicators">
+            <div>
+                <strong>05</strong>
+                <span>Mission hazards</span>
+            </div>
+            <div>
+                <strong>24/7</strong>
+                <span>Personal insight</span>
+            </div>
+            <div>
+                <strong>01</strong>
+                <span>Healthier mission</span>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<section class="astra-intro" id="about-astra" aria-labelledby="about-heading">
+    <p class="astra-eyebrow">Your health is mission control</p>
+    <h2 id="about-heading">Read the signals.<br/>Protect the journey.</h2>
+    <p>
+        From blood pressure and heart rate to sleep and mood, ASTRA brings the signals that matter
+        together in one clear, human-centered view.
+    </p>
+</section>
