@@ -13,12 +13,32 @@ namespace Tests;
 
 public class IdentityTests
 {
+    [Theory]
+    [InlineData(false, "012345")]
+    [InlineData(true, "Ground-Control!2026")]
+    public async Task AccountsRejectEmailOnCreationAndUpdate(bool groundControl, string password)
+    {
+        using var fixture = new IdentityFixture();
+        var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = new ApplicationUser { UserName = "no-email", IsGroundControl = groundControl, Email = "unused@example.test" };
+        var result = await users.CreateAsync(user, password);
+        Assert.Contains(result.Errors, error => error.Code == "EmailNotSupported");
+        user.Email = null;
+        Assert.True((await users.CreateAsync(user, password)).Succeeded);
+        Assert.True(await users.CheckPasswordAsync(user, password));
+        result = await users.SetEmailAsync(user, "unused@example.test");
+        Assert.Contains(result.Errors, error => error.Code == "EmailNotSupported");
+        var stored = await fixture.Services.GetRequiredService<ApplicationDbContext>().Users.AsNoTracking().SingleAsync();
+        Assert.Null(stored.Email);
+        Assert.Null(stored.NormalizedEmail);
+    }
+
     [Fact]
     public async Task CrewPinsAreSixDigitsUniqueAndHashedAndCanBeChanged()
     {
         using var fixture = new IdentityFixture();
         var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
-        var crew = new ApplicationUser { UserName = "crew", Email = "crew@example.test" };
+        var crew = new ApplicationUser { UserName = "crew" };
         Assert.False((await users.CreateAsync(crew, "12345")).Succeeded);
         Assert.False((await users.CreateAsync(crew, "１２３４５６")).Succeeded);
         Assert.True((await users.CreateAsync(crew, "012345")).Succeeded);
@@ -26,12 +46,12 @@ public class IdentityTests
         Assert.NotEqual("012345", crew.PinLookup);
         Assert.True(await users.CheckPasswordAsync(crew, "012345"));
         Assert.False(await users.CheckPasswordAsync(crew, "123456"));
-        var medic = new ApplicationUser { UserName = "medic", Email = "medic@example.test" };
+        var medic = new ApplicationUser { UserName = "medic" };
         Assert.False((await users.CreateAsync(medic, "012345")).Succeeded);
         Assert.True((await users.CreateAsync(medic, "654321")).Succeeded);
         Assert.False((await users.ChangePasswordAsync(crew, "012345", "654321")).Succeeded);
         Assert.True((await users.ChangePasswordAsync(crew, "012345", "111111")).Succeeded);
-        var next = new ApplicationUser { UserName = "next", Email = "next@example.test" };
+        var next = new ApplicationUser { UserName = "next" };
         Assert.True((await users.CreateAsync(next, "012345")).Succeeded);
     }
 
@@ -40,7 +60,7 @@ public class IdentityTests
     {
         using var fixture = new IdentityFixture();
         var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
-        var ground = new ApplicationUser { UserName = "ground", Email = "ground@example.test", IsGroundControl = true };
+        var ground = new ApplicationUser { UserName = "ground", IsGroundControl = true };
         Assert.False((await users.CreateAsync(ground, "123456")).Succeeded);
         Assert.True((await users.CreateAsync(ground, "Ground-Control!2026")).Succeeded);
         Assert.Null(ground.PinLookup);
@@ -83,13 +103,16 @@ public class IdentityTests
         using (var legacy = new LegacyContext(new DbContextOptionsBuilder<LegacyContext>().UseSqlite(connection).Options))
         {
             await legacy.Database.EnsureCreatedAsync();
-            legacy.Users.Add(new IdentityUser { Id = "legacy", UserName = "existing" });
+            legacy.Users.Add(new IdentityUser { Id = "legacy", UserName = "existing", Email = "old@example.test", NormalizedEmail = "OLD@EXAMPLE.TEST", EmailConfirmed = true });
             await legacy.SaveChangesAsync();
         }
         using var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite(connection).Options);
         await IdentityDatabaseInitializer.InitializeAsync(db);
         Assert.Equal("existing", (await db.Users.SingleAsync()).UserName);
-        Assert.Equal(3, (await db.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Null((await db.Users.SingleAsync()).Email);
+        Assert.Null((await db.Users.SingleAsync()).NormalizedEmail);
+        Assert.False((await db.Users.SingleAsync()).EmailConfirmed);
+        Assert.Equal(4, (await db.Database.GetAppliedMigrationsAsync()).Count());
         await IdentityDatabaseInitializer.InitializeAsync(db);
         Assert.Single(await db.Users.ToListAsync());
     }
@@ -104,14 +127,13 @@ public class IdentityTests
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["Identity:Accounts:0:UserName"] = "mission-ground",
-            ["Identity:Accounts:0:Email"] = "ground@example.test",
             ["Identity:Accounts:0:Role"] = AppRoles.GroundControl,
             ["Identity:Accounts:0:Password"] = "Ground-Control!2026"
         }).Build();
         await IdentitySeeder.SeedAsync(fixture.Services, configuration);
         var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
-        var ground = (await users.FindByEmailAsync("ground@example.test"))!;
-        Assert.True(ground.EmailConfirmed);
+        var ground = (await users.FindByNameAsync("mission-ground"))!;
+        Assert.Null(ground.Email);
         Assert.True((await users.ChangePasswordAsync(ground, "Ground-Control!2026", "Changed-Ground!2026")).Succeeded);
         await IdentitySeeder.SeedAsync(fixture.Services, configuration);
         Assert.True(await users.CheckPasswordAsync(ground, "Changed-Ground!2026"));
@@ -129,10 +151,12 @@ public class IdentityTests
         var members = fixture.Services.GetRequiredService<OnboardMemberService>();
         var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
         var ground = Principal("ground", AppRoles.GroundControl);
-        Assert.True((await members.CreateAsync(ground, "crew", "crew@example.test", AppRoles.Crew)).Succeeded);
-        Assert.True((await members.CreateAsync(ground, "medic", "medic@example.test", AppRoles.Medic)).Succeeded);
+        Assert.True((await members.CreateAsync(ground, "crew", AppRoles.Crew)).Succeeded);
+        Assert.True((await members.CreateAsync(ground, "medic", AppRoles.Medic)).Succeeded);
         var crew = (await users.FindByNameAsync("crew"))!;
         var medic = (await users.FindByNameAsync("medic"))!;
+        Assert.Null(crew.Email);
+        Assert.Null(medic.Email);
         var pin = (await members.GetPinAsync(ground, crew.Id))!;
         Assert.True(PinLookupService.IsPin(pin));
         Assert.True(await users.CheckPasswordAsync(crew, pin));
@@ -145,8 +169,8 @@ public class IdentityTests
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetPinAsync(Principal(medic.Id, AppRoles.Medic), crew.Id));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetPinAsync(Principal(crew.Id, AppRoles.Crew), medic.Id));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetPinAsync(new ClaimsPrincipal(), crew.Id));
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.CreateAsync(Principal(medic.Id, AppRoles.Medic), "unauthorized", "no@example.test", AppRoles.Crew));
-        Assert.False((await members.CreateAsync(ground, "invalid", "no@example.test", AppRoles.GroundControl)).Succeeded);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.CreateAsync(Principal(medic.Id, AppRoles.Medic), "unauthorized", AppRoles.Crew));
+        Assert.False((await members.CreateAsync(ground, "invalid", AppRoles.GroundControl)).Succeeded);
         var replacement = new[] { "012345", "012346", "012347" }.First(candidate => candidate != pin && candidate != medicPin);
         Assert.True((await users.ChangePasswordAsync(crew, pin, replacement)).Succeeded);
         Assert.Equal(replacement, await members.GetPinAsync(ground, crew.Id));
@@ -172,7 +196,7 @@ public class IdentityTests
             services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.Password.RequiredLength = 12;
-                options.User.RequireUniqueEmail = true;
+                options.User.RequireUniqueEmail = false;
             }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddSingleton<PinLookupService>();
             services.AddSingleton<IDataProtectionProvider>(new EphemeralDataProtectionProvider());
@@ -181,6 +205,8 @@ public class IdentityTests
             Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions.RemoveAll<IPasswordValidator<ApplicationUser>>(services);
             services.AddScoped<IPasswordValidator<ApplicationUser>, AccountPasswordValidator>();
             services.AddScoped<IPasswordHasher<ApplicationUser>, AccountPasswordHasher>();
+            Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions.RemoveAll<IUserValidator<ApplicationUser>>(services);
+            services.AddScoped<IUserValidator<ApplicationUser>, AccountUserValidator>();
             Services = services.BuildServiceProvider();
             Services.GetRequiredService<ApplicationDbContext>().Database.EnsureCreated();
         }

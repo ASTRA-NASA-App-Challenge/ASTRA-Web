@@ -24,8 +24,8 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = true;
-        options.User.RequireUniqueEmail = true;
+        options.SignIn.RequireConfirmedAccount = false;
+        options.User.RequireUniqueEmail = false;
         options.User.AllowedUserNameCharacters += " ";
         options.Password.RequiredLength = 12;
         options.Lockout.MaxFailedAccessAttempts = 5;
@@ -40,6 +40,8 @@ builder.Services.AddScoped<OnboardMemberService>();
 builder.Services.RemoveAll<IPasswordValidator<ApplicationUser>>();
 builder.Services.AddScoped<IPasswordValidator<ApplicationUser>, AccountPasswordValidator>();
 builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, AccountPasswordHasher>();
+builder.Services.RemoveAll<IUserValidator<ApplicationUser>>();
+builder.Services.AddScoped<IUserValidator<ApplicationUser>, AccountUserValidator>();
 builder.Services.AddAuthorization(options => options.AddPolicy(MedicalPolicies.ReadRecord,
     policy => policy.RequireAuthenticatedUser().AddRequirements(new ReadMedicalRecordRequirement())));
 builder.Services.AddSingleton<IAuthorizationHandler, MedicalRecordAuthorizationHandler>();
@@ -49,6 +51,10 @@ builder.Services.AddRazorPages(options =>
     // Remove the registration routes supplied by the Identity UI library too.
     options.Conventions.AddAreaPageRouteModelConvention("Identity", "/Account/Register", model => model.Selectors.Clear());
     options.Conventions.AddAreaPageRouteModelConvention("Identity", "/Account/RegisterConfirmation", model => model.Selectors.Clear());
+    foreach (var page in new[] { "/Account/Manage/Email", "/Account/ForgotPassword", "/Account/ForgotPasswordConfirmation",
+        "/Account/ResetPassword", "/Account/ResetPasswordConfirmation", "/Account/ConfirmEmail",
+        "/Account/ConfirmEmailChange", "/Account/ResendEmailConfirmation" })
+        options.Conventions.AddAreaPageRouteModelConvention("Identity", page, model => model.Selectors.Clear());
 });
 
 var app = builder.Build();
@@ -65,15 +71,12 @@ using (var scope = app.Services.CreateScope())
     {
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         const string username = "ASTRA Ground Control";
-        const string email = "astra@local.com";
-        var existing = await users.FindByNameAsync(username) ?? await users.FindByEmailAsync(email);
+        var existing = await users.FindByNameAsync(username);
         if (existing is null)
         {
             var groundControl = new ApplicationUser
             {
                 UserName = username,
-                Email = email,
-                EmailConfirmed = true,
                 IsGroundControl = true
             };
             var created = await users.CreateAsync(groundControl, "Astra123!2026");
@@ -88,7 +91,7 @@ using (var scope = app.Services.CreateScope())
         }
         else if (!existing.IsGroundControl || !await users.IsInRoleAsync(existing, AppRoles.GroundControl))
         {
-            throw new InvalidOperationException("The local ground-control username or email is already used by another account.");
+            throw new InvalidOperationException("The local ground-control username is already used by another account.");
         }
     }
 }

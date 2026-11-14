@@ -12,7 +12,7 @@ namespace Web.Identity;
 public sealed class OnboardMemberService(ApplicationDbContext db, UserManager<ApplicationUser> users,
     PinLookupService lookups, PinProtectionService protection)
 {
-    public async Task<IdentityResult> CreateAsync(ClaimsPrincipal actor, string username, string email, string role)
+    public async Task<IdentityResult> CreateAsync(ClaimsPrincipal actor, string username, string role)
     {
         RequireGroundControl(actor);
         if (role is not (AppRoles.Crew or AppRoles.Medic))
@@ -25,7 +25,7 @@ public sealed class OnboardMemberService(ApplicationDbContext db, UserManager<Ap
             if (await db.Users.AnyAsync(user => user.PinLookup == lookup)) continue;
 
             await using var transaction = await db.Database.BeginTransactionAsync();
-            var member = new ApplicationUser { UserName = username, Email = email, EmailConfirmed = true };
+            var member = new ApplicationUser { UserName = username };
             try
             {
                 var result = await users.CreateAsync(member, pin);

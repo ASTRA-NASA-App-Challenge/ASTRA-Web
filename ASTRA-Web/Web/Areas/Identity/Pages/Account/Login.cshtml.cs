@@ -22,7 +22,7 @@ public class LoginModel(UserManager<ApplicationUser> users, SignInManager<Applic
     {
         if (!ModelState.IsValid) return Page();
         var identifier = Input.Identifier.Trim();
-        var user = await users.FindByNameAsync(identifier) ?? await users.FindByEmailAsync(identifier);
+        var user = await users.FindByNameAsync(identifier);
         if (user is not null)
         {
             var result = await signIn.PasswordSignInAsync(user, Input.Password, false, lockoutOnFailure: true);

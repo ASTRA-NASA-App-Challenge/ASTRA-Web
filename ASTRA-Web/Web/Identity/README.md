@@ -2,9 +2,16 @@
 
 | Role | Web credentials | Medical record access |
 | --- | --- | --- |
-| Crew | Username or email + unique six-digit PIN as password | Own records |
-| Medic | Username or email + unique six-digit PIN as password | Everyone's records |
-| GroundControl | Username or email + conventional password | Everyone's records |
+| Crew | Username + unique six-digit PIN as password | Own records |
+| Medic | Username + unique six-digit PIN as password | Everyone's records |
+| GroundControl | Username + conventional password | Everyone's records |
+
+No account uses email. Email validation, email login, email management and email
+recovery routes are disabled. Identity's inherited nullable email columns remain
+for framework compatibility; the removal migration clears existing values and
+the user validator rejects new email addresses. Email data cannot be restored by
+rolling back that migration. Account provisioning is controlled by ground control,
+so sign-in does not require email confirmation.
 
 PINs are strings, so leading zeroes are preserved. Identity stores salted password
 hashes for all accounts. The same PIN is also stored encrypted with ASP.NET Core
@@ -18,7 +25,7 @@ non-alphanumeric character. Failed web logins count toward Identity's five-attem
 ## Provisioning
 
 In Development mode, `Program.cs` seeds the temporary local account
-`ASTRA Ground Control` / `astra@local.com` with password `Astra123!2026` if it does not
+`ASTRA Ground Control` with password `Astra123!2026` if it does not
 already exist. The seeded password follows the normal password policy.
 Restarting does not reset an existing password.
 
@@ -30,19 +37,18 @@ deployment secret store, never committed appsettings files. For example:
 ```powershell
 dotnet user-secrets set 'Identity:PinLookupKey' '<random stable secret of at least 32 bytes>' --project Web
 dotnet user-secrets set 'Identity:Accounts:0:UserName' 'ground-control' --project Web
-dotnet user-secrets set 'Identity:Accounts:0:Email' 'ground@example.org' --project Web
 dotnet user-secrets set 'Identity:Accounts:0:Role' 'GroundControl' --project Web
 dotnet user-secrets set 'Identity:Accounts:0:Password' '<strong account password>' --project Web
 ```
 
 Use subsequent account indices for additional ground control accounts. Crew and
 medics are created by `OnboardMemberService.CreateAsync`, which requires an
-authenticated ground control principal, username, email and role (`Crew` or
+authenticated ground control principal, username and role (`Crew` or
 `Medic`). It generates a cryptographically random, unique six-digit PIN and
 creates the account and role assignment in one database transaction. No PIN is
 supplied by the operator. The admin panel and onboard members page will call this
 service when those screens are built. Roles are seeded even when no accounts are
-configured. Provisioned emails are treated as already verified.
+configured.
 Existing configured accounts are checked for role consistency; their passwords
 are not overwritten on restart. Password changes/reset use the same validation
 and fingerprint logic as account creation. Do not change the PIN lookup key
@@ -90,6 +96,6 @@ records. This policy grants read access only; write permissions need their own
 explicit policy. Do not return Identity entities as medical record responses.
 
 The hardware/API authentication endpoint is a future integration. It should use
-username/email plus the same Identity password (the PIN), enforce lockout, and
+username plus the same Identity password (the PIN), enforce lockout, and
 issue the chosen API authentication mechanism. Do not add a separate PIN field or
 bypass Identity's password verification and access rules.

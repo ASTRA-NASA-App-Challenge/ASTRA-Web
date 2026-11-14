@@ -29,8 +29,6 @@ public static class IdentitySeeder
             user = new ApplicationUser
             {
                 UserName = username,
-                Email = account["Email"] ?? throw new InvalidOperationException("An account email is required."),
-                EmailConfirmed = true,
                 IsGroundControl = role == AppRoles.GroundControl
             };
             Check(await users.CreateAsync(user, account["Password"]
