@@ -17,13 +17,48 @@ namespace Tests;
 public class IdentityTests
 {
     [Theory]
+    [InlineData(AppRoles.Crew, null, "Morgan", "FirstNameRequired")]
+    [InlineData(AppRoles.Crew, "  ", "Morgan", "FirstNameRequired")]
+    [InlineData(AppRoles.Crew, "Alex", null, "LastNameRequired")]
+    [InlineData(AppRoles.Medic, null, "Morgan", "FirstNameRequired")]
+    [InlineData(AppRoles.Medic, "Alex", "  ", "LastNameRequired")]
+    public async Task OnboardAccountsRequireFirstAndLastNames(string role, string? firstName, string? lastName, string error)
+    {
+        using var fixture = new IdentityFixture();
+        var members = fixture.Services.GetRequiredService<OnboardMemberService>();
+        var result = await members.CreateAsync(Principal("ground", AppRoles.GroundControl), "incomplete", role,
+            firstName!, lastName!, null, "012345");
+        Assert.Contains(result.Errors, item => item.Code == error);
+        Assert.Empty(await fixture.Services.GetRequiredService<ApplicationDbContext>().Users.ToListAsync());
+    }
+
+    [Fact]
+    public async Task GroundControlSuppliedPinsAreValidatedWithoutCreatingPartialAccounts()
+    {
+        using var fixture = new IdentityFixture();
+        await IdentitySeeder.SeedAsync(fixture.Services, new ConfigurationBuilder().Build());
+        var members = fixture.Services.GetRequiredService<OnboardMemberService>();
+        var actor = Principal("ground", AppRoles.GroundControl);
+        Assert.True((await members.CreateAsync(actor, "crew", AppRoles.Crew, "Alex", "Morgan", null, "001234")).Succeeded);
+        var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
+        var crew = (await users.FindByNameAsync("crew"))!;
+        Assert.True(await users.CheckPasswordAsync(crew, "001234"));
+        Assert.Equal("001234", await members.GetPinAsync(actor, crew.Id));
+        var duplicate = await members.CreateAsync(actor, "medic", AppRoles.Medic, "Sam", "Reed", null, "001234");
+        Assert.Contains(duplicate.Errors, error => error.Code == "PinUnavailable");
+        var invalid = await members.CreateAsync(actor, "invalid", AppRoles.Crew, "Taylor", "Lee", null, "12345");
+        Assert.Contains(invalid.Errors, error => error.Code == "InvalidPin");
+        Assert.Equal(1, await users.Users.CountAsync());
+    }
+
+    [Theory]
     [InlineData(false, "012345")]
     [InlineData(true, "Ground-Control!2026")]
     public async Task AccountsRejectEmailOnCreationAndUpdate(bool groundControl, string password)
     {
         using var fixture = new IdentityFixture();
         var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
-        var user = new ApplicationUser { UserName = "no-email", IsGroundControl = groundControl, Email = "unused@example.test" };
+        var user = new ApplicationUser { UserName = "no-email", IsGroundControl = groundControl, Email = "unused@example.test", FirstName = "Alex", LastName = "Morgan" };
         var result = await users.CreateAsync(user, password);
         Assert.Contains(result.Errors, error => error.Code == "EmailNotSupported");
         user.Email = null;
@@ -41,7 +76,7 @@ public class IdentityTests
     {
         using var fixture = new IdentityFixture();
         var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
-        var crew = new ApplicationUser { UserName = "crew" };
+        var crew = new ApplicationUser { UserName = "crew", FirstName = "Alex", LastName = "Morgan" };
         Assert.False((await users.CreateAsync(crew, "12345")).Succeeded);
         Assert.False((await users.CreateAsync(crew, "１２３４５６")).Succeeded);
         Assert.True((await users.CreateAsync(crew, "012345")).Succeeded);
@@ -49,12 +84,12 @@ public class IdentityTests
         Assert.NotEqual("012345", crew.PinLookup);
         Assert.True(await users.CheckPasswordAsync(crew, "012345"));
         Assert.False(await users.CheckPasswordAsync(crew, "123456"));
-        var medic = new ApplicationUser { UserName = "medic" };
+        var medic = new ApplicationUser { UserName = "medic", FirstName = "Sam", LastName = "Reed" };
         Assert.False((await users.CreateAsync(medic, "012345")).Succeeded);
         Assert.True((await users.CreateAsync(medic, "654321")).Succeeded);
         Assert.False((await users.ChangePasswordAsync(crew, "012345", "654321")).Succeeded);
         Assert.True((await users.ChangePasswordAsync(crew, "012345", "111111")).Succeeded);
-        var next = new ApplicationUser { UserName = "next" };
+        var next = new ApplicationUser { UserName = "next", FirstName = "Taylor", LastName = "Lee" };
         Assert.True((await users.CreateAsync(next, "012345")).Succeeded);
     }
 
@@ -115,7 +150,7 @@ public class IdentityTests
         Assert.Null((await db.Users.SingleAsync()).Email);
         Assert.Null((await db.Users.SingleAsync()).NormalizedEmail);
         Assert.False((await db.Users.SingleAsync()).EmailConfirmed);
-        Assert.Equal(4, (await db.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(5, (await db.Database.GetAppliedMigrationsAsync()).Count());
         await IdentityDatabaseInitializer.InitializeAsync(db);
         Assert.Single(await db.Users.ToListAsync());
     }
@@ -154,12 +189,16 @@ public class IdentityTests
         var members = fixture.Services.GetRequiredService<OnboardMemberService>();
         var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
         var ground = Principal("ground", AppRoles.GroundControl);
-        Assert.True((await members.CreateAsync(ground, "crew", AppRoles.Crew)).Succeeded);
-        Assert.True((await members.CreateAsync(ground, "medic", AppRoles.Medic)).Succeeded);
+        Assert.True((await members.CreateAsync(ground, "crew", AppRoles.Crew, " Alex ", " Morgan ", null, "012345")).Succeeded);
+        Assert.True((await members.CreateAsync(ground, "medic", AppRoles.Medic, "Sam", "Reed", " Avery ", "654321")).Succeeded);
         var crew = (await users.FindByNameAsync("crew"))!;
         var medic = (await users.FindByNameAsync("medic"))!;
         Assert.Null(crew.Email);
         Assert.Null(medic.Email);
+        Assert.Equal("Alex", crew.FirstName);
+        Assert.Equal("Morgan", crew.LastName);
+        Assert.Null(crew.MiddleName);
+        Assert.Equal("Avery", medic.MiddleName);
         var pin = (await members.GetPinAsync(ground, crew.Id))!;
         Assert.True(PinLookupService.IsPin(pin));
         Assert.True(await users.CheckPasswordAsync(crew, pin));
@@ -172,8 +211,8 @@ public class IdentityTests
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetPinAsync(Principal(medic.Id, AppRoles.Medic), crew.Id));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetPinAsync(Principal(crew.Id, AppRoles.Crew), medic.Id));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetPinAsync(new ClaimsPrincipal(), crew.Id));
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.CreateAsync(Principal(medic.Id, AppRoles.Medic), "unauthorized", AppRoles.Crew));
-        Assert.False((await members.CreateAsync(ground, "invalid", AppRoles.GroundControl)).Succeeded);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.CreateAsync(Principal(medic.Id, AppRoles.Medic), "unauthorized", AppRoles.Crew, "", "", null, "012345"));
+        Assert.False((await members.CreateAsync(ground, "invalid", AppRoles.GroundControl, "", "", null, "012345")).Succeeded);
         var replacement = new[] { "012345", "012346", "012347" }.First(candidate => candidate != pin && candidate != medicPin);
         Assert.True((await users.ChangePasswordAsync(crew, pin, replacement)).Succeeded);
         Assert.Equal(replacement, await members.GetPinAsync(ground, crew.Id));

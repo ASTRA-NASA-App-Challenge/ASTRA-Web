@@ -1,6 +1,4 @@
-using System.Globalization;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using Common.Identity;
 using Data;
 using Entities.Identity;
@@ -15,48 +13,57 @@ namespace Services.Identity;
 public sealed class OnboardMemberService(ApplicationDbContext db, UserManager<ApplicationUser> users,
     PinLookupService lookups, PinProtectionService protection)
 {
-    public async Task<IdentityResult> CreateAsync(ClaimsPrincipal actor, string username, string role)
+    public async Task<IdentityResult> CreateAsync(ClaimsPrincipal actor, string username, string role, string firstName,
+        string lastName, string? middleName, string inputPin)
     {
         RequireGroundControl(actor);
         if (role is not (AppRoles.Crew or AppRoles.Medic))
             return IdentityResult.Failed(new IdentityError { Code = "InvalidMemberRole", Description = "Onboard members must be crew or medics." });
 
-        for (var attempt = 0; attempt < 32; attempt++)
-        {
-            var pin = RandomNumberGenerator.GetInt32(1_000_000).ToString("D6", CultureInfo.InvariantCulture);
-            var lookup = lookups.Compute(pin);
-            if (await db.Users.AnyAsync(user => user.PinLookup == lookup)) continue;
+        if (inputPin is null || !PinLookupService.IsPin(inputPin))
+            return IdentityResult.Failed(new IdentityError { Code = "InvalidPin", Description = "The PIN must be exactly six digits (0–9)." });
+        var lookup = lookups.Compute(inputPin);
+        if (await db.Users.AnyAsync(user => user.PinLookup == lookup)) return PinUnavailable();
 
-            await using var transaction = await db.Database.BeginTransactionAsync();
-            var member = new ApplicationUser { UserName = username };
-            try
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        var member = new ApplicationUser
+        {
+            UserName = username,
+            FirstName = firstName?.Trim() ?? string.Empty,
+            MiddleName = string.IsNullOrWhiteSpace(middleName) ? null : middleName.Trim(),
+            LastName = lastName?.Trim() ?? string.Empty
+        };
+        try
+        {
+            var result = await users.CreateAsync(member, inputPin);
+            if (!result.Succeeded)
             {
-                var result = await users.CreateAsync(member, pin);
-                if (!result.Succeeded)
-                {
-                    if (result.Errors.Any(error => error.Code == "PinUnavailable")) continue;
-                    return result;
-                }
-                result = await users.AddToRoleAsync(member, role);
-                if (!result.Succeeded)
-                {
-                    await transaction.RollbackAsync();
-                    db.Entry(member).State = EntityState.Detached;
-                    return result;
-                }
-                await transaction.CommitAsync();
-                return IdentityResult.Success;
+                return result;
             }
-            catch (DbUpdateException exception) when (exception.InnerException is SqliteException
-                { SqliteExtendedErrorCode: 2067 } sqlite && sqlite.Message.Contains("AspNetUsers.PinLookup", StringComparison.Ordinal))
+            result = await users.AddToRoleAsync(member, role);
+            if (!result.Succeeded)
             {
-                // A simultaneous request reserved this PIN. Let the database enforce uniqueness and try again.
                 await transaction.RollbackAsync();
                 db.Entry(member).State = EntityState.Detached;
+                return result;
             }
+            await transaction.CommitAsync();
+            return IdentityResult.Success;
         }
-        return IdentityResult.Failed(new IdentityError { Code = "PinGenerationFailed", Description = "Unable to allocate a unique PIN. Try again." });
+        catch (DbUpdateException exception) when (exception.InnerException is SqliteException
+            { SqliteExtendedErrorCode: 2067 } sqlite && sqlite.Message.Contains("AspNetUsers.PinLookup", StringComparison.Ordinal))
+        {
+            // Another request may have reserved this PIN after the initial uniqueness check.
+            await transaction.RollbackAsync();
+            db.Entry(member).State = EntityState.Detached;
+            return PinUnavailable();
+        }
     }
+
+    private static IdentityResult PinUnavailable() => IdentityResult.Failed(new IdentityError
+    {
+        Code = "PinUnavailable", Description = "This PIN is unavailable. Choose another six-digit PIN."
+    });
 
     public async Task<string?> GetPinAsync(ClaimsPrincipal actor, string memberId)
     {
