@@ -434,6 +434,5 @@ FodyWeavers.xsd
 *.db-wal
 *.sqlite-shm
 *.sqlite-wal
-ASTRA-Web/Web/astra.db
 ASTRA-Web/Web/astra.db-shm
 ASTRA-Web/Web/astra.db-wal
