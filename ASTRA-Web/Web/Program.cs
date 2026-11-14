@@ -26,6 +26,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = true;
         options.User.RequireUniqueEmail = true;
+        options.User.AllowedUserNameCharacters += " ";
         options.Password.RequiredLength = 12;
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
@@ -58,6 +59,38 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await IdentityDatabaseInitializer.InitializeAsync(dbContext);
     await IdentitySeeder.SeedAsync(scope.ServiceProvider, builder.Configuration);
+
+    // Temporary account for local development only. Never reset an existing password.
+    if (app.Environment.IsDevelopment())
+    {
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        const string username = "ASTRA Ground Control";
+        const string email = "astra@local.com";
+        var existing = await users.FindByNameAsync(username) ?? await users.FindByEmailAsync(email);
+        if (existing is null)
+        {
+            var groundControl = new ApplicationUser
+            {
+                UserName = username,
+                Email = email,
+                EmailConfirmed = true,
+                IsGroundControl = true
+            };
+            var created = await users.CreateAsync(groundControl, "Astra123!2026");
+            if (!created.Succeeded)
+                throw new InvalidOperationException(string.Join("; ", created.Errors.Select(error => error.Description)));
+            var assigned = await users.AddToRoleAsync(groundControl, AppRoles.GroundControl);
+            if (!assigned.Succeeded)
+            {
+                await users.DeleteAsync(groundControl);
+                throw new InvalidOperationException(string.Join("; ", assigned.Errors.Select(error => error.Description)));
+            }
+        }
+        else if (!existing.IsGroundControl || !await users.IsInRoleAsync(existing, AppRoles.GroundControl))
+        {
+            throw new InvalidOperationException("The local ground-control username or email is already used by another account.");
+        }
+    }
 }
 
 // Configure the HTTP request pipeline.

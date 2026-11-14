@@ -17,6 +17,11 @@ non-alphanumeric character. Failed web logins count toward Identity's five-attem
 
 ## Provisioning
 
+In Development mode, `Program.cs` seeds the temporary local account
+`ASTRA Ground Control` / `astra@local.com` with password `Astra123!2026` if it does not
+already exist. The seeded password follows the normal password policy.
+Restarting does not reset an existing password.
+
 There is no registration page; the registration routes from the Identity UI
 library are removed. Only ground control accounts are provisioned on startup from
 `Identity:Accounts`. Keep credentials in user secrets for development or the
