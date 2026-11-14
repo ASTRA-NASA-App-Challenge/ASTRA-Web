@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Web</title>
+    <title>@ViewData["Title"] - ASTRA</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -11,17 +11,20 @@
 </head>
 <body class="@(ViewData["CoverPage"] is true ? "astra-cover-page" : "")">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark astra-navbar">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ASTRA</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+        <nav class="navbar navbar-expand-sm navbar-dark astra-navbar" aria-label="Main navigation">
+            <div class="container-fluid astra-shell">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span class="astra-brand-mark" aria-hidden="true"></span><span>ASTRA</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#astra-navigation" aria-controls="astra-navigation"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <div id="astra-navigation" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index"
+                               aria-current="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "page" : null)">@(User.Identity?.IsAuthenticated == true ? "Dashboard" : "Home")</a>
                         </li>
                     </ul>
                     <partial name="_LoginPartial" />
@@ -29,15 +32,16 @@
             </div>
         </nav>
     </header>
-    <div class="@(ViewData["FullWidth"] is true ? "container-fluid p-0" : "container")">
+    <div class="astra-page-content @(ViewData["FullWidth"] is true ? "container-fluid p-0" : "container")">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
     <footer class="astra-footer">
-        <div class="container">
-            &copy; 2026 - ASTRA
+        <div class="astra-shell astra-footer__content">
+            <span class="astra-footer__brand">&copy; @DateTime.UtcNow.Year ASTRA</span>
+            <span class="astra-footer__tagline">Human health, beyond Earth</span>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

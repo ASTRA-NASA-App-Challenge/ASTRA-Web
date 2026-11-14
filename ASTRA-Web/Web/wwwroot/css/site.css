@@ -18,9 +18,22 @@ html {
 }
 
 body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
   margin-bottom: 0;
   background: #07111f;
   color: #f4f7fb;
+}
+
+.astra-page-content {
+  flex: 1;
+}
+
+.astra-shell {
+  width: 100%;
+  padding-right: clamp(1.5rem, 8vw, 8rem);
+  padding-left: clamp(1.5rem, 8vw, 8rem);
 }
 
 main {
@@ -293,8 +306,97 @@ label {
 
 .astra-navbar {
   border-bottom: 1px solid rgba(145, 221, 255, 0.16);
-  background: #07111f;
+  background: linear-gradient(110deg, #020711, #091422);
   box-shadow: none;
+  padding: 0.8rem 0;
+}
+
+.astra-navbar > .astra-shell {
+  align-items: center;
+  padding-right: clamp(1.5rem, 8vw, 8rem);
+  padding-left: clamp(1.5rem, 8vw, 8rem);
+}
+
+.astra-navbar .navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-right: 2rem;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  color: #fff;
+  white-space: nowrap;
+  min-height: 2.5rem;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1;
+}
+
+.astra-brand-mark {
+  position: relative;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid #91ddff;
+  border-radius: 50%;
+  background: rgba(145, 221, 255, 0.12);
+  box-shadow: 0 0 1rem rgba(145, 221, 255, 0.15);
+}
+
+.astra-brand-mark::after {
+  content: "";
+  position: absolute;
+  inset: 0.25rem -0.35rem;
+  border: 1px solid #91ddff;
+  border-radius: 50%;
+  transform: rotate(-35deg);
+}
+
+.astra-navbar .navbar-nav {
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+}
+
+.astra-navbar .navbar-collapse,
+.astra-navbar .nav-item,
+.astra-navbar .nav-item form {
+  align-items: center;
+}
+
+.astra-navbar .nav-item,
+.astra-navbar .nav-item form {
+  display: flex;
+  margin: 0;
+}
+
+.astra-navbar .nav-link,
+.astra-navbar .astra-navbar__login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  line-height: 1.25;
+}
+
+.astra-navbar .nav-link {
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.astra-navbar .nav-link[aria-current="page"] {
+  color: #91ddff;
+  background: rgba(145, 221, 255, 0.08);
+}
+
+.astra-navbar .astra-navbar__login {
+  padding: 0.45rem 1.25rem;
+  font-size: 0.9rem;
+}
+
+.astra-navbar .navbar-toggler {
+  border-color: rgba(145, 221, 255, 0.25);
 }
 
 .astra-navbar .navbar-brand,
@@ -309,9 +411,45 @@ label {
 
 .astra-footer {
   border-top: 1px solid rgba(145, 221, 255, 0.16);
-  background: #07111f;
+  background: #020711;
   color: rgba(235, 243, 251, 0.62);
-  padding: 1rem 0;
+  padding: 0.9rem 0;
+}
+
+.astra-footer__content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+}
+
+.astra-footer__brand {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.astra-footer__tagline {
+  color: rgba(145, 221, 255, 0.65);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 575.98px) {
+  .astra-navbar .navbar-collapse {
+    padding-top: 0.75rem;
+  }
+
+  .astra-navbar .navbar-nav {
+    align-items: stretch;
+  }
+
+  .astra-navbar .astra-navbar__login {
+    display: inline-flex;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
 }
 
 .astra-footer a {

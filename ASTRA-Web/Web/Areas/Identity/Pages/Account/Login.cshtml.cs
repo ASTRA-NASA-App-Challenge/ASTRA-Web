@@ -32,7 +32,7 @@ public class LoginModel(UserManager<ApplicationUser> users, SignInManager<Applic
             if (result.RequiresTwoFactor)
                 return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = false });
         }
-        ModelState.AddModelError(string.Empty, "Sign-in failed. Check your credentials or try again later.");
+        ModelState.AddModelError(string.Empty, "Login failed. Check your credentials or try again later.");
         return Page();
     }
 }
