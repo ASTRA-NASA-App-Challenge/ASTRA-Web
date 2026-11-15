@@ -1391,3 +1391,8 @@ label {
 .astra-dashboard__card--stats.is-loading .health-line-chart { opacity:.45; }
 .health-period-feedback { color:#f6d567; font-size:.85rem; margin:1rem 0; }
 .health-period-feedback:empty { display:none; }
+.astra-demo-login { margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid rgba(145,221,255,.18); }
+.astra-demo-login h3 { font-size:.9rem; color:#a5b7c7; text-align:center; margin-bottom:1rem; }
+.astra-demo-login__buttons { display:flex; flex-wrap:wrap; gap:.6rem; }
+.astra-demo-login__buttons .astra-button { flex:1; padding:.6rem .8rem; border:1px solid #46738b; border-radius:2rem; background:rgba(145,221,255,.08); color:#91ddff; font-size:.85rem; white-space:nowrap; }
+.astra-demo-login__buttons .astra-button:hover { background:#91ddff; color:#071321; }

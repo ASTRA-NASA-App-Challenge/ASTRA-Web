@@ -113,33 +113,28 @@ using (var scope = app.Services.CreateScope())
             throw new InvalidOperationException("The local ground-control username is already used by another account.");
         }
 
-        const string astronautUsername = "ASTRA Test Astronaut";
-        var astronaut = await users.FindByNameAsync(astronautUsername);
-        var testPinLookup = scope.ServiceProvider.GetRequiredService<PinLookupService>().Compute("123456");
-        // Existing development accounts may have been edited or reassigned to Medic.
-        // Seed only when both the sample username and PIN are available; preserve all existing accounts.
-        if (astronaut is null
-            && !await dbContext.MonitoringPinReservations.AnyAsync(x => x.PinLookup == testPinLookup)
-            && !await dbContext.Users.AnyAsync(x => x.PinLookup == testPinLookup))
+
+    }
+}
+
+// Demo setup is opt-in. Replacement is a separate, one-time maintenance action.
+if (builder.Configuration.GetValue<bool>("Demo:Enabled"))
+{
+    using var scope = app.Services.CreateScope();
+    var prepare = builder.Configuration.GetValue<bool>("Demo:Prepare");
+    await DemoAccounts.SeedAsync(scope.ServiceProvider, prepare);
+    if (prepare)
+    {
+        try { await scope.ServiceProvider.GetRequiredService<Web.Monitoring.MonitoringDeletionProcessor>().ProcessAsync(default); }
+        catch (Exception ex) when (ex is AggregateException or HttpRequestException or TaskCanceledException) { app.Logger.LogWarning("Old monitoring cleanup is queued for retry."); }
+        var client = scope.ServiceProvider.GetRequiredService<Web.Monitoring.MonitoringClient>();
+        foreach (var member in DemoAccounts.Members)
         {
-            astronaut = new ApplicationUser
-            {
-                UserName = astronautUsername,
-                FirstName = "Berk",
-                MiddleName = "Boyanov",
-                LastName = "Manolov",
-                IsGroundControl = false
-            };
-            var created = await users.CreateAsync(astronaut, "123456");
-            if (!created.Succeeded)
-                throw new InvalidOperationException(string.Join("; ", created.Errors.Select(error => error.Description)));
-            var assigned = await users.AddToRoleAsync(astronaut, AppRoles.Crew);
-            if (!assigned.Succeeded)
-            {
-                await users.DeleteAsync(astronaut);
-                throw new InvalidOperationException(string.Join("; ", assigned.Errors.Select(error => error.Description)));
-            }
+            try { await client.RegisterAsync(member.Pin, default); }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException) { app.Logger.LogWarning("Demo monitoring registration will retry on normal startup."); }
         }
+        app.Logger.LogInformation("Demo preparation completed.");
+        return;
     }
 }
 

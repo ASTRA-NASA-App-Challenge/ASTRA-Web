@@ -402,6 +402,39 @@ public class IdentityTests
             { Content = new StringContent("{\"items\":[],\"next_cursor\":null}", System.Text.Encoding.UTF8, "application/json") });
     }
 
+    [Fact]
+    public async Task DemoPreparationReplacesLegacyMembersAndPreservesGroundAndSubsequentEdits()
+    {
+        using var fixture = new IdentityFixture();
+        await IdentitySeeder.SeedAsync(fixture.Services, new ConfigurationBuilder().Build());
+        var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
+        var ground = new ApplicationUser { UserName = "ASTRA Ground Control", IsGroundControl = true };
+        Assert.True((await users.CreateAsync(ground, "Ground-Control!2026")).Succeeded);
+        Assert.True((await users.AddToRoleAsync(ground, AppRoles.GroundControl)).Succeeded);
+        var hash = ground.PasswordHash;
+        var members = fixture.Services.GetRequiredService<OnboardMemberService>();
+        var actor = Principal(ground.Id, AppRoles.GroundControl);
+        foreach (var name in new[] { "salex", "ASTRA Test Astronaut" })
+            Assert.True((await members.CreateAsync(actor, name, AppRoles.Crew, "Old", "Member", null)).Succeeded);
+        await DemoAccounts.SeedAsync(fixture.Services, replaceLegacy: true);
+        Assert.Null(await users.FindByNameAsync("salex"));
+        Assert.Null(await users.FindByNameAsync("ASTRA Test Astronaut"));
+        Assert.Equal(7, await users.Users.CountAsync());
+        Assert.Equal(hash, (await users.FindByIdAsync(ground.Id))!.PasswordHash);
+        Assert.Equal(2, await fixture.Services.GetRequiredService<ApplicationDbContext>().MonitoringPinReservations.CountAsync());
+        foreach (var demo in DemoAccounts.Members)
+        {
+            var member = (await users.FindByNameAsync(demo.Username))!;
+            Assert.True(await users.CheckPasswordAsync(member, demo.Pin));
+            Assert.True(await users.IsInRoleAsync(member, demo.Role));
+        }
+        var crew = (await users.FindByNameAsync("Crew"))!;
+        Assert.True((await users.ChangePasswordAsync(crew, "520301", "920301")).Succeeded);
+        await DemoAccounts.SeedAsync(fixture.Services);
+        Assert.True(await users.CheckPasswordAsync(crew, "920301"));
+        Assert.Equal(7, await users.Users.CountAsync());
+    }
+
     private static ClaimsPrincipal Principal(string id, string role) => new(new ClaimsIdentity([
         new Claim(ClaimTypes.NameIdentifier, id), new Claim(ClaimTypes.Role, role)
     ], "test"));
@@ -472,6 +505,7 @@ public class IdentityTests
             services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.Password.RequiredLength = 12;
+                options.User.AllowedUserNameCharacters += " ";
                 options.User.RequireUniqueEmail = false;
             }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddSingleton<PinLookupService>();

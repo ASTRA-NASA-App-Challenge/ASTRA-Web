@@ -111,6 +111,17 @@
                     <span data-login-label>Login</span><span class="astra-login__arrow" aria-hidden="true">&rarr;</span>
                 </button>
             </form>
+            @if (Model.DemoEnabled)
+            {
+                <section class="astra-demo-login" aria-labelledby="demo-login-heading">
+                    <h3 id="demo-login-heading">Explore the demo</h3>
+                    <form method="post" asp-page-handler="Demo" class="astra-demo-login__buttons">
+                        <button type="submit" name="profile" value="ground" class="btn astra-button">Ground Control</button>
+                        <button type="submit" name="profile" value="medic" class="btn astra-button">Medic</button>
+                        <button type="submit" name="profile" value="crew" class="btn astra-button">Crew</button>
+                    </form>
+                </section>
+            }
             <p class="astra-login__support">Need access? Contact ground control.</p>
             <a class="astra-login__back" asp-controller="Home" asp-action="Index" asp-area="">&larr; Back to home</a>
         </section>
