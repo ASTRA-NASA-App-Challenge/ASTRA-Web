@@ -58,7 +58,7 @@
         recorded.forEach(row => {
             const tr = document.createElement('tr');
             const time = document.createElement('td');
-            time.textContent = new Date(row.at).toLocaleString(undefined, {timeZone:'UTC', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+            time.textContent = new Date(row.at).toLocaleString('en-GB', {timeZone:'UTC', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
             const value = document.createElement('td');
             value.textContent = row.value === null || !Number.isFinite(row.value) ? 'Not measured' : `${row.value} ${unit}`;
             tr.append(time, value);
@@ -67,12 +67,18 @@
                 signal.textContent = row.quality || 'Unknown';
                 tr.append(signal);
             }
+            const statusCell = document.createElement('td');
+            const status = document.createElement('span');
+            status.className = 'health-history-status state-'+row.state;
+            status.textContent = row.status;
+            statusCell.append(status);
+            tr.append(statusCell);
             table.append(tr);
         });
         if (!recorded.length) {
             const tr = document.createElement('tr');
             const cell = document.createElement('td');
-            cell.colSpan = showSignal ? 3 : 2;
+            cell.colSpan = showSignal ? 4 : 3;
             cell.textContent = 'No measurements in this period.';
             tr.append(cell);
             table.append(tr);
@@ -87,9 +93,9 @@
         for(let i=0;i<4;i++) { const yy=25+i*175/3; svg.append(el('line',{x1:50,x2:650,y1:yy,y2:yy,stroke:'rgba(145,221,255,.12)'})); svg.append(el('text',{x:42,y:yy+4,'text-anchor':'end',fill:'#9fb4c4','font-size':14},(max-i*(max-min)/3).toFixed(1))); }
         svg.append(el('polyline',{points:rows.map(r=>`${x(r)},${y(r)}`).join(' '),fill:'none',stroke:'#91ddff','stroke-width':2}));
         rows.forEach(row => {
-            const timestamp = new Date(row.at).toLocaleString(undefined, {timeZone:'UTC'});
+            const timestamp = new Date(row.at).toLocaleString('en-GB', {timeZone:'UTC'});
             const label = timestamp+' UTC: '+row.value+' '+unit+(row.quality ? ' · '+row.quality+' signal' : '');
-            const dot = el('circle', {cx:x(row), cy:y(row), r:6, fill:row.quality && row.quality!=='good' ? '#e9ba74' : '#91ddff', tabindex:0, role:'button', 'aria-label':label, 'aria-expanded':'false'});
+            const dot = el('circle', {cx:x(row), cy:y(row), r:6, fill:({good:'#86e3b3',watch:'#c3e874',caution:'#f6d567',high:'#ff9c52',critical:'#ff536b',unknown:'#93a9ba'})[row.state] || '#93a9ba', tabindex:0, role:'button', 'aria-label':label, 'aria-expanded':'false'});
             const open = () => {
                 if (activePoint === dot) { closePopup(); return; }
                 closePopup();
@@ -106,6 +112,7 @@
                     details.append(group);
                 };
                 field('Value', `${row.value} ${unit}`);
+                field('Status', row.status);
                 field('Recorded (UTC)', timestamp);
                 if (row.quality) field('Pulse sensor quality', row.quality);
                 activePopup = new bootstrap.Popover(dot, {
@@ -122,7 +129,7 @@
             });
             svg.append(dot);
         });
-        const date = at=>new Date(at).toLocaleString(undefined,{timeZone:'UTC',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+        const date = at=>new Date(at).toLocaleString('en-GB',{timeZone:'UTC',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
         svg.append(el('text',{x:50,y:225,fill:'#9fb4c4','font-size':14},date(rows[0].at)),el('text',{x:650,y:225,'text-anchor':'end',fill:'#9fb4c4','font-size':14},date(rows.at(-1).at)));
         chart.append(svg);
         note.textContent='All times UTC · Select a point for details.';
@@ -130,7 +137,7 @@
         if (!summary) { summary=document.createElement('p'); summary.dataset.historySummary=''; summary.className='health-summary'; chart.after(summary); }
         
         summary.textContent=`Average ${(values.reduce((a,b)=>a+b,0)/values.length).toFixed(1)} ${unit} · Lowest ${low} · Highest ${high}`;
-        if (selector.value==='pulse' && rows.some(x=>x.quality!=='good')) summary.textContent+=' · Includes low-quality readings (amber).';
+        if (selector.value==='pulse' && rows.some(x=>x.quality!=='good')) summary.textContent+=' · Includes low-quality readings (grey).';
     };
     selector.addEventListener('change', render); render();
     const countdown = root.querySelector('[data-check-countdown]');

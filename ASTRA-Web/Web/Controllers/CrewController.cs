@@ -8,10 +8,33 @@ namespace Web.Controllers;
 
 [Authorize(Roles = AppRoles.GroundControl)]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public class CrewController(OnboardMemberService members) : Controller
+public class CrewController(OnboardMemberService members, Web.Monitoring.CrewHealthReader health, Web.Monitoring.MonitoringClient monitoring) : Controller
 {
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
-        => View(new CrewOverviewViewModel { Members = await members.GetMembersAsync(User, cancellationToken) });
+    {
+        var roster = await members.GetMembersAsync(User, cancellationToken);
+        return View(new CrewOverviewViewModel { Members = roster, Health = await health.ReadRosterAsync(roster, cancellationToken) });
+    }
+
+    public async Task<IActionResult> Health(string id, CancellationToken cancellationToken, int days = 7)
+    {
+        var member = (await members.GetMembersAsync(User, cancellationToken)).FirstOrDefault(x => x.Id == id);
+        if (member is null) return NotFound();
+        return View("~/Views/Home/Dashboard.cshtml", await health.ReadAsync(member, days == 30 ? 30 : 7, false, cancellationToken));
+    }
+
+    public async Task<IActionResult> HealthPhoto(string memberId, string id, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(id) || id.Length > 200) return BadRequest();
+        var member = (await members.GetMembersAsync(User, cancellationToken)).FirstOrDefault(x => x.Id == memberId);
+        if (member?.Pin is null) return NotFound();
+        try
+        {
+            var photo = await monitoring.PhotoAsync(member.Pin, id, cancellationToken);
+            return photo is null ? NotFound() : File(photo, "image/jpeg");
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException) { return NotFound(); }
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -51,9 +74,11 @@ public class CrewController(OnboardMemberService members) : Controller
             }
         }
 
+        var refreshedRoster = await members.GetMembersAsync(User, cancellationToken);
         return View("Index", new CrewOverviewViewModel
         {
-            Members = await members.GetMembersAsync(User, cancellationToken),
+            Members = refreshedRoster,
+            Health = await health.ReadRosterAsync(refreshedRoster, cancellationToken),
             NewMember = input,
             OpenAddMember = true
         });
@@ -86,9 +111,11 @@ public class CrewController(OnboardMemberService members) : Controller
                 ModelState.AddModelError(field is null ? string.Empty : $"EditedMember.{field}", error.Description);
             }
         }
+        var refreshedRoster = await members.GetMembersAsync(User, cancellationToken);
         return View("Index", new CrewOverviewViewModel
         {
-            Members = await members.GetMembersAsync(User, cancellationToken),
+            Members = refreshedRoster,
+            Health = await health.ReadRosterAsync(refreshedRoster, cancellationToken),
             EditedMember = input,
             OpenEditMember = true
         });
@@ -113,9 +140,11 @@ public class CrewController(OnboardMemberService members) : Controller
         }
         if (result.Errors.Any(error => error.Code == "MemberNotFound")) return NotFound();
         foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
+        var refreshedRoster = await members.GetMembersAsync(User, cancellationToken);
         return View("Index", new CrewOverviewViewModel
         {
-            Members = await members.GetMembersAsync(User, cancellationToken),
+            Members = refreshedRoster,
+            Health = await health.ReadRosterAsync(refreshedRoster, cancellationToken),
             DeletedMember = input,
             DeleteMemberName = member.FullName,
             OpenDeleteMember = true

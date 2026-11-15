@@ -65,10 +65,18 @@ if (crewRoster) {
     const reset = crewRoster.querySelector("[data-crew-reset]");
     const results = crewRoster.querySelector("[data-crew-results]");
     let role = "all";
+    let attentionOnly = false;
+    const attention = crewRoster.querySelector('[data-crew-attention]');
+    attention?.addEventListener('click', () => {
+        attentionOnly = !attentionOnly;
+        attention.setAttribute('aria-pressed', String(attentionOnly));
+        update();
+    });
     const normalize = (value) => value.normalize("NFKD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase();
     const sortMembers = () => {
         const ordered = [...cards].sort((a, b) => {
             const nameOrder = a.dataset.name.localeCompare(b.dataset.name, undefined, { sensitivity: "base", numeric: true });
+            if (sort.value === "attention") return Number(b.dataset.priority) - Number(a.dataset.priority) || nameOrder;
             if (sort.value === "role") return a.dataset.role.localeCompare(b.dataset.role) || nameOrder;
             return sort.value === "desc" ? -nameOrder : nameOrder;
         });
@@ -81,18 +89,19 @@ if (crewRoster) {
         let visible = 0;
         cards.forEach((card) => {
             card.hidden = !(role === "all" || card.dataset.role === role)
-                || !normalize(`${card.dataset.name} ${card.dataset.username}`).includes(query);
+                || !normalize(`${card.dataset.name} ${card.dataset.username}`).includes(query)
+                || (attentionOnly && card.dataset.attention !== "true");
             if (!card.hidden) visible++;
         });
         empty.hidden = visible > 0;
-        reset.hidden = !query && role === "all";
+        reset.hidden = !query && role === "all" && !attentionOnly;
         results.textContent = `${visible} of ${cards.length} ${cards.length === 1 ? "member" : "members"}`;
         filters.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.crewFilter === role)));
     };
     search.addEventListener("input", update);
     sort.addEventListener("change", () => { sortMembers(); update(); });
     filters.forEach((button) => button.addEventListener("click", () => { role = button.dataset.crewFilter; update(); }));
-    reset.addEventListener("click", () => { search.value = ""; role = "all"; update(); search.focus(); });
+    reset.addEventListener("click", () => { search.value = ""; role = "all"; attentionOnly = false; attention?.setAttribute("aria-pressed", "false"); update(); search.focus(); });
     crewRoster.querySelectorAll("[data-crew-reveal]").forEach((button) => {
         button.hidden = false;
         button.addEventListener("click", () => {

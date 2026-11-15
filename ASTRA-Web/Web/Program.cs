@@ -70,6 +70,7 @@ builder.Services.AddHttpClient<Web.Monitoring.MonitoringClient>(client =>
     client.MaxResponseContentBufferSize = 5 * 1024 * 1024;
 }).RemoveAllLoggers();
 builder.Services.AddScoped<Web.Monitoring.MonitoringDeletionProcessor>();
+builder.Services.AddScoped<Web.Monitoring.CrewHealthReader>();
 builder.Services.AddHostedService<Web.Monitoring.PinRegistrationWorker>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();

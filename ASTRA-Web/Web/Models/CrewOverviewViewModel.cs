@@ -6,6 +6,7 @@ namespace Web.Models;
 public sealed class CrewOverviewViewModel
 {
     public IReadOnlyList<OnboardMemberSummary> Members { get; init; } = [];
+    public IReadOnlyDictionary<string, CrewDashboardModel> Health { get; init; } = new Dictionary<string, CrewDashboardModel>();
     public AddMemberInput NewMember { get; init; } = new();
     public bool OpenAddMember { get; init; }
     public EditMemberInput EditedMember { get; init; } = new();

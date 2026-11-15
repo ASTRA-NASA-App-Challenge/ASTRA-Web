@@ -1,4 +1,6 @@
 @model CrewOverviewViewModel
+@using Common.Models
+@using System.Globalization
 @{
     ViewData["Title"] = "Crew Overview";
     ViewData["FullWidth"] = true;
@@ -28,6 +30,11 @@
         <div><span><i class="astra-roster__dot astra-roster__dot--medic" aria-hidden="true"></i> Medics</span><strong>@medicCount.ToString("D2")</strong></div>
     </div>
 
+    <div class="astra-roster__health-summary">
+        <span><strong>@Model.Health.Values.Count(x => HealthSeverity.Rank(x.State) >= 3)</strong> high alerts</span>
+        <button type="button" data-crew-attention aria-pressed="false">Needs attention <strong>@Model.Health.Values.Count(x => x.NeedsAttention)</strong></button>
+        <a class="btn astra-button astra-button--primary" asp-action="Index">Refresh health ↻</a>
+    </div>
     <div class="astra-roster__toolbar">
         <div class="astra-roster__search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
@@ -41,6 +48,7 @@
         </div>
         <label class="visually-hidden" for="crew-sort">Sort members</label>
         <select id="crew-sort" class="astra-roster__sort" data-crew-sort>
+            <option value="attention">Attention first</option>
             <option value="asc">Name: A–Z</option>
             <option value="desc">Name: Z–A</option>
             <option value="role">Role</option>
@@ -54,7 +62,9 @@
     <div class="astra-roster__grid" data-crew-grid>
         @foreach (var member in Model.Members)
         {
-            <article class="astra-member @(member.IsMedic ? "astra-member--medic" : "")" data-crew-member
+            var status = Model.Health.GetValueOrDefault(member.Id);
+            <article class="astra-member astra-member--health state-@(status?.State ?? "unknown") @(member.IsMedic ? "astra-member--medic" : "")" data-crew-member
+                     data-priority="@(status?.Priority ?? 50)" data-attention="@((status?.NeedsAttention ?? true).ToString().ToLowerInvariant())"
                      data-name="@member.FullName" data-username="@member.Username" data-role="@(member.IsMedic ? "medic" : "crew")">
                 <div class="astra-member__heading">
                     <span class="astra-member__avatar" aria-hidden="true">@member.Initials</span>
@@ -76,6 +86,19 @@
                 <p class="astra-member__feedback" role="status" aria-live="polite" aria-atomic="true" data-crew-feedback></p>
                 <h3>@member.FullName</h3>
                 <p class="astra-member__username">@member.Username</p>
+                <div class="astra-member__health">
+                    <span class="health-history-status state-@(status?.State ?? "unknown")">@(status?.Error is not null ? "Monitoring unavailable" : status?.Status ?? "Refresh health status")</span>
+                    @if (status is not null)
+                    {
+                        @if (status.Latest is not null) { <p>Pulse <strong>@(status.Latest.Pulse.Bpm > 0 ? $"{status.Latest.Pulse.Bpm} bpm" : "Not measured")</strong> · @status.Latest.MeasuredAt.UtcDateTime.ToString("dd MMM, HH:mm 'UTC'", CultureInfo.InvariantCulture)</p> }
+                        else { <p>No recent pulse measurement</p> }
+                        @if (HealthSeverity.Rank(status.State) > 0) { <p class="astra-member__health-warning">@(HealthSeverity.Rank(status.State) >= 3 ? "Prompt medic / ground review needed" : "Check unusual readings")</p> }
+                        @foreach (var metric in status.Metrics.Where(x => HealthSeverity.Rank(x.State) > 0)) { <p class="state-@metric.State"><span class="health-status">@metric.Name: @metric.Value @metric.Unit</span></p> }
+                        @if (status.Due) { <p class="astra-member__health-warning">Six-hour check-in due</p> }
+                        @if (status.Cabin is not null && status.Now - status.Cabin.MeasuredAt > TimeSpan.FromHours(6)) { <p>Cabin readings are stale</p> }
+                    }
+                    <a class="btn astra-button astra-member__view-health" asp-action="Health" asp-route-id="@member.Id">View health <span aria-hidden="true">↗</span></a>
+                </div>
                 <div class="astra-member__pin">
                     @if (member.Pin is not null)
                     {

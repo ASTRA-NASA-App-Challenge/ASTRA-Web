@@ -1,34 +1,20 @@
 @model CrewDashboardModel
 @{
-    var pulseWarning = CrewDashboardModel.PulseState(Model.Latest) == "review";
-    var dataWarning = Model.Error is not null || CrewDashboardModel.PulseState(Model.Latest) == "unknown" || Model.Cabin is null || Model.Now - Model.Cabin.MeasuredAt > TimeSpan.FromHours(6);
+    var tint = Model.State switch
+    {
+        "good" => "0.45 0 0 0 0.02 0 0.9 0 0 0.05 0 0 0.62 0 0.04 0 0 0 1 0",
+        "watch" => "0.75 0 0 0 0.05 0 0.9 0 0 0.05 0 0 0.25 0 0.02 0 0 0 1 0",
+        "caution" => "1 0 0 0 0.05 0 0.8 0 0 0.05 0 0 0.15 0 0.02 0 0 0 1 0",
+        "high" => "1 0 0 0 0.08 0 0.45 0 0 0.03 0 0 0.12 0 0.02 0 0 0 1 0",
+        "critical" => "1 0 0 0 0.12 0 0.12 0 0 0.02 0 0 0.18 0 0.03 0 0 0 1 0",
+        _ => "1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0"
+    };
 }
 <aside class="astra-dashboard__card health-silhouette state-@Model.State" aria-label="Body status: @Model.Status">
     <svg viewBox="0 0 240 480" role="img" aria-labelledby="body-status-title body-status-description">
         <title id="body-status-title">@Model.Status</title>
-        <desc id="body-status-description">Green indicates measured values in range, amber indicates review, and grey indicates incomplete or stale readings. Warning dots indicate monitoring alerts, not diagnosed organ problems.</desc>
-        <defs>
-            <filter id="body-condition-tint" color-interpolation-filters="sRGB">
-                @if (Model.State == "good") {
-                    <feColorMatrix type="matrix" values="0.45 0 0 0 0.02 0 0.9 0 0 0.05 0 0 0.62 0 0.04 0 0 0 1 0" />
-                }
-                else if (Model.State == "review") {
-                    <feColorMatrix type="matrix" values="0.95 0 0 0 0.05 0 0.55 0 0 0.05 0 0 0.25 0 0.02 0 0 0 1 0" />
-                }
-            </filter>
-        </defs>
+        <desc id="body-status-description">Green, lime, yellow, orange and red show increasing screening severity; grey means incomplete or unreliable data. The highest alert determines the colour.</desc>
+        <defs><filter id="body-condition-tint" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="@tint" /></filter></defs>
         <image href="@Url.Content("~/images/crew-body.png")" x="8" y="16" width="224" height="448" preserveAspectRatio="xMidYMid meet" filter="url(#body-condition-tint)" />
-        @if (pulseWarning) {
-            <g class="health-silhouette__warning" role="img" aria-label="Pulse outside resting reference; medic review recommended"><title>Pulse: review with the onboard medic</title><circle cx="132" cy="148" r="5"/><path d="M132 148 177 123h45"/><circle cx="222" cy="123" r="2"/></g>
-        }
-        @if (Model.CabinState == "review") {
-            <g class="health-silhouette__warning" role="img" aria-label="Cabin temperature or humidity warning"><title>Cabin readings: contact ground control</title><circle cx="120" cy="7" r="5"/><path d="M120 7h65l22 23"/><circle cx="207" cy="30" r="2"/></g>
-        }
-        @if (dataWarning) {
-            <g class="health-silhouette__warning health-silhouette__warning--data" role="img" aria-label="Monitoring readings missing, unreliable or stale"><title>Monitoring data incomplete or stale</title><circle cx="64" cy="189" r="5"/><path d="M64 189 35 166H8"/><circle cx="8" cy="166" r="2"/></g>
-        }
-        @if (Model.Due) {
-            <g class="health-silhouette__warning health-silhouette__warning--data" role="img" aria-label="Six-hour check-in due"><title>New check-in required</title><circle cx="119" cy="240" r="5"/><path d="M119 240 176 267h45"/><circle cx="221" cy="267" r="2"/></g>
-        }
     </svg>
 </aside>

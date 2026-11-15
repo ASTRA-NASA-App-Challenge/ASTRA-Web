@@ -24,7 +24,7 @@ public class CrewDashboardTests
     }
     [Theory]
     [InlineData(72,"good",0,"good")]
-    [InlineData(120,"good",0,"review")]
+    [InlineData(120,"good",0,"caution")]
     [InlineData(72,"poor",0,"unknown")]
     [InlineData(72,"good",7,"unknown")]
     public void StatusIncludesQualityAndFreshness(int bpm,string quality,int age,string expected)
@@ -37,8 +37,8 @@ public class CrewDashboardTests
 
     [Theory]
     [InlineData(22,45,"good")]
-    [InlineData(30,45,"review")]
-    [InlineData(22,85,"review")]
+    [InlineData(30,45,"caution")]
+    [InlineData(22,85,"caution")]
     public void CabinScreeningContributesToCombinedStatus(double temperature,double humidity,string expected)
     {
         var now=DateTimeOffset.UtcNow;

@@ -35,6 +35,15 @@ public sealed class MonitoringClient(HttpClient http)
         return await response.Content.ReadAsByteArrayAsync(ct);
     }
 
+    public async Task<MonitoringRecord> ReadLatestAsync(string pin, CancellationToken ct)
+    {
+        ValidatePin(pin);
+        var prefix = $"api/v1/crew/{pin}/";
+        var pulse = await http.GetFromJsonAsync<MeasurementPage>(prefix + "measurements?limit=1", Json, ct);
+        var cabin = await http.GetFromJsonAsync<EnvironmentPage>(prefix + "environment-readings?limit=1", Json, ct);
+        return new(pulse?.Items ?? [], cabin?.Items ?? []);
+    }
+
     public async Task<MonitoringRecord> ReadWindowAsync(string pin, CancellationToken ct, int days = 7)
     {
         ValidatePin(pin);
