@@ -91,6 +91,30 @@ public class MonitoringClientTests
         Assert.Equal(TimeSpan.FromDays(days), DateTimeOffset.Parse(bounds["to"]) - DateTimeOffset.Parse(bounds["from"]));
     }
 
+    [Fact]
+    public async Task DemoStatusHandlesOlderServers()
+    {
+        var client = Client(new Stub(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound))));
+        Assert.Null(await client.ReadDemoStatusAsync(default));
+    }
+
+    [Fact]
+    public async Task DemoStatusReadsAuthenticatedServerCounts()
+    {
+        var client = Client(new Stub(request =>
+        {
+            Assert.Equal("/api/v1/demo/status", request.RequestUri!.AbsolutePath);
+            var json = """{"state":"verifying","registered_pins":6,"expected_pins":6,"measurements":750,"environment_readings":750,"uploaded_photos":18,"expected_measurements":750,"expected_environment_readings":750,"expected_photos":18}""";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
+        }));
+        var status = await client.ReadDemoStatusAsync(default);
+        Assert.NotNull(status);
+        Assert.Equal("verifying", status.State);
+        Assert.Equal(750, status.Measurements);
+        Assert.Equal(750, status.EnvironmentReadings);
+        Assert.Equal(18, status.UploadedPhotos);
+        Assert.Equal(6, status.RegisteredPins);
+    }
     private static MonitoringClient Client(HttpMessageHandler handler) => new(new HttpClient(handler) { BaseAddress = new("http://localhost/") });
     private sealed class Stub(Func<HttpRequestMessage, Task<HttpResponseMessage>> send) : HttpMessageHandler
     {

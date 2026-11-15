@@ -1,0 +1,9 @@
+<section class="astra-demo-status" data-demo-status data-status-url="@Url.Action("Status", "Demo")" aria-label="Demo preparation" hidden>
+    <div role="status" aria-live="polite" aria-atomic="true">
+        <strong data-demo-title>Preparing demo data</strong>
+        <span data-demo-detail></span>
+    </div>
+    <progress data-demo-progress max="1518" value="0" aria-label="Demo preparation progress"></progress>
+    <button type="button" class="btn btn-sm btn-outline-info" data-demo-refresh hidden>Refresh data</button>
+</section>
+<script src="~/js/demo-status.js" asp-append-version="true" defer></script>

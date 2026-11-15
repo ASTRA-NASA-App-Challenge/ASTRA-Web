@@ -1,0 +1,19 @@
+.astra-demo-status {
+    margin: 1rem auto;
+    padding: .85rem 1.2rem;
+    max-width: 96%;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .75rem 1.5rem;
+    color: #c7eaff;
+    background: #102435;
+    border: 1px solid #37637b;
+    border-radius: .6rem;
+}
+.astra-demo-status[hidden], .astra-demo-status [hidden] { display: none; }
+.astra-demo-status strong, .astra-demo-status span { display: block; }
+.astra-demo-status span { margin-top: .25rem; font-size: .85rem; }
+.astra-demo-status progress { flex: 1 1 10rem; max-width: 20rem; accent-color: #8bd9fb; }
+.astra-demo-status[data-state="complete"] { border-color: #51b996; }
+.astra-demo-status[data-state="retrying"], .astra-demo-status[data-state="unavailable"] { border-color: #d4b258; }

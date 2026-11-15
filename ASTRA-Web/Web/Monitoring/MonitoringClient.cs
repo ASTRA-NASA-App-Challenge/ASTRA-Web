@@ -9,6 +9,13 @@ public sealed class MonitoringClient(HttpClient http)
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 
+    public async Task<DemoSeedStatus?> ReadDemoStatusAsync(CancellationToken ct)
+    {
+        using var response = await http.GetAsync("api/v1/demo/status", ct);
+        if (response.StatusCode == HttpStatusCode.NotFound) return null;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<DemoSeedStatus>(Json, ct);
+    }
     public async Task RegisterAsync(string pin, CancellationToken ct)
     {
         ValidatePin(pin);
@@ -89,3 +96,6 @@ public sealed record MonitoringRecord(List<MeasurementSample> Measurements, List
 public sealed record MonitoringPage(string MemberId, string Name, MonitoringRecord? Record, string? Error);
 
 public sealed record EnvironmentPage(List<EnvironmentSample> Items, string? NextCursor);
+
+public sealed record DemoSeedStatus(string State, int RegisteredPins, int ExpectedPins, int Measurements,
+    int EnvironmentReadings, int UploadedPhotos, int ExpectedMeasurements, int ExpectedEnvironmentReadings, int ExpectedPhotos);
