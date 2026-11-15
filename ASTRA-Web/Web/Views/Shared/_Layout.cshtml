@@ -2,9 +2,10 @@
 @{
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
     var isGroundControl = isAuthenticated && User.IsInRole(AppRoles.GroundControl);
+    var isMedic = isAuthenticated && !isGroundControl && User.IsInRole(AppRoles.Medic);
     var overviewController = isGroundControl ? "Crew" : "Home";
     var overviewAction = isAuthenticated && !isGroundControl ? "Dashboard" : "Index";
-    var overviewLabel = isGroundControl ? "Crew Overview" : isAuthenticated ? "Dashboard" : "Home";
+    var overviewLabel = isGroundControl ? "Crew Overview" : isMedic ? "My Health" : isAuthenticated ? "Dashboard" : "Home";
     var overviewActive = ViewContext.RouteData.Values["controller"]?.ToString() == overviewController
         && (ViewContext.RouteData.Values["action"]?.ToString() == overviewAction
             || (isGroundControl && ViewContext.RouteData.Values["action"]?.ToString() is "Create" or "Edit" or "Delete" or "Health"));
@@ -44,6 +45,9 @@
                             <a class="nav-link astra-navbar__home" asp-area="" asp-controller="@overviewController" asp-action="@overviewAction"
                                aria-current="@(overviewActive ? "page" : null)"><span class="astra-nav-label">@overviewLabel</span></a>
                         </li>
+                        @if (isMedic) {
+                            <li class="nav-item"><a class="nav-link astra-navbar__home" asp-area="" asp-controller="Medic" asp-action="Index" aria-current="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Medic" ? "page" : null)"><span class="astra-nav-label">Crew Health</span></a></li>
+                        }
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>

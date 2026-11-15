@@ -2,7 +2,7 @@
 @using Common.Models
 @using System.Globalization
 @{
-    ViewData["Title"] = "Crew Overview";
+    ViewData["Title"] = Model.IsMedicView ? "Crew Health" : "Crew Overview";
     ViewData["FullWidth"] = true;
     var crewCount = Model.Members.Count(member => !member.IsMedic);
     var medicCount = Model.Members.Count(member => member.IsMedic);
@@ -11,12 +11,15 @@
 <section class="astra-roster astra-shell" data-crew-roster aria-labelledby="roster-heading">
     <header class="astra-roster__header">
         <div>
-            <p class="astra-eyebrow">Ground control / Personnel</p>
-            <h1 id="roster-heading">Crew Overview<span>.</span></h1>
+            <p class="astra-eyebrow">@(Model.IsMedicView ? "Medic / Crew monitoring" : "Ground control / Personnel")</p>
+            <h1 id="roster-heading">@(Model.IsMedicView ? "Crew Health" : "Crew Overview")<span>.</span></h1>
         </div>
+        @if (Model.IsMedicView) { <a class="btn astra-button astra-button--primary" asp-controller="Home" asp-action="Dashboard">My health</a> }
+        else {
         <button type="button" class="btn astra-button astra-button--primary" data-bs-toggle="modal" data-bs-target="#add-member-modal">
             <span aria-hidden="true">+</span> Add member
         </button>
+        }
     </header>
 
     @if (TempData["CrewNotice"] is string notice)
@@ -24,16 +27,18 @@
         <div class="astra-roster__notice" role="status"><span aria-hidden="true">✓</span> @notice</div>
     }
 
+    @if (!Model.IsMedicView) {
     <div class="astra-roster__stats" aria-label="Onboard personnel totals">
         <div><span>On-board members</span><strong>@Model.Members.Count.ToString("D2")</strong></div>
         <div><span><i class="astra-roster__dot" aria-hidden="true"></i> Crew members</span><strong>@crewCount.ToString("D2")</strong></div>
         <div><span><i class="astra-roster__dot astra-roster__dot--medic" aria-hidden="true"></i> Medics</span><strong>@medicCount.ToString("D2")</strong></div>
     </div>
+    }
 
     <div class="astra-roster__health-summary">
         <span><strong>@Model.Health.Values.Count(x => HealthSeverity.Rank(x.State) >= 3)</strong> high alerts</span>
         <button type="button" data-crew-attention aria-pressed="false">Needs attention <strong>@Model.Health.Values.Count(x => x.NeedsAttention)</strong></button>
-        <a class="btn astra-button astra-button--primary" asp-action="Index">Refresh health ↻</a>
+        <a class="btn astra-button astra-button--primary" asp-action="Index">Refresh <span aria-hidden="true">↻</span></a>
     </div>
     <div class="astra-roster__toolbar">
         <div class="astra-roster__search">
@@ -70,6 +75,7 @@
                     <span class="astra-member__avatar" aria-hidden="true">@member.Initials</span>
                     <div class="astra-member__tools">
                     <span class="astra-member__role">@(member.IsMedic ? "Medic" : "Crew")</span>
+                        @if (!Model.IsMedicView) {
                         <button type="button" class="astra-member__tool" data-bs-toggle="modal" data-bs-target="#edit-member-modal"
                                 data-member-edit data-member-id="@member.Id" data-first-name="@member.FirstName" data-middle-name="@member.MiddleName"
                                 data-last-name="@member.LastName" data-username="@member.Username" data-role="@member.Role"
@@ -81,6 +87,7 @@
                                 aria-label="Delete @member.FullName" title="Delete member">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></svg>
                         </button>
+                        }
                     </div>
                 </div>
                 <p class="astra-member__feedback" role="status" aria-live="polite" aria-atomic="true" data-crew-feedback></p>
@@ -99,6 +106,7 @@
                     }
                     <a class="btn astra-button astra-member__view-health" asp-action="Health" asp-route-id="@member.Id">View health <span aria-hidden="true">↗</span></a>
                 </div>
+                @if (!Model.IsMedicView) {
                 <div class="astra-member__pin">
                     @if (member.Pin is not null)
                     {
@@ -122,6 +130,7 @@
                         <div><span class="astra-member__pin-label">Member PIN</span><span class="astra-member__unavailable">PIN unavailable</span></div>
                     }
                 </div>
+                }
             </article>
         }
     </div>
@@ -133,6 +142,7 @@
     </div>
 </section>
 
+@if (!Model.IsMedicView) {
 <div class="modal fade astra-member-modal" id="add-member-modal" tabindex="-1" aria-labelledby="add-member-heading"
      aria-describedby="add-member-description" aria-hidden="true" data-open-on-load="@Model.OpenAddMember.ToString().ToLowerInvariant()">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -281,3 +291,5 @@
         </div>
     </div>
 </div>
+
+}

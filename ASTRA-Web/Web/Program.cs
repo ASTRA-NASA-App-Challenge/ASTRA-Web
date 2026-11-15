@@ -51,6 +51,7 @@ builder.Services.AddSingleton<PinLookupService>();
 builder.Services.AddDataProtection().SetApplicationName("ASTRA");
 builder.Services.AddSingleton<PinProtectionService>();
 builder.Services.AddScoped<OnboardMemberService>();
+builder.Services.AddScoped<MedicMemberService>();
 builder.Services.RemoveAll<IPasswordValidator<ApplicationUser>>();
 builder.Services.AddScoped<IPasswordValidator<ApplicationUser>, AccountPasswordValidator>();
 builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, AccountPasswordHasher>();

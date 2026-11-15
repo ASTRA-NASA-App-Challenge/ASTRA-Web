@@ -6,7 +6,8 @@
     ViewData["FullWidth"] = true;
     var groundView = Model.MemberId is not null;
     ViewData["Title"] = groundView ? $"{Model.Name} — Health" : "My health dashboard";
-    var dashboardController = groundView ? "Crew" : "Home";
+    var medicView = groundView && Model.MemberController == "Medic";
+    var dashboardController = groundView ? Model.MemberController : "Home";
     var dashboardAction = groundView ? "Health" : "Dashboard";
     var latest = Model.Latest;
     var history = Model.Record.Measurements.OrderByDescending(x => x.MeasuredAt).ToList();
@@ -14,10 +15,12 @@
 }
 <section class="astra-dashboard astra-dashboard--live" data-health-dashboard aria-labelledby="dashboard-heading">
     <header class="astra-dashboard__header">
-        <div><p class="astra-eyebrow">@(groundView ? "Ground control / Health" : "Crew health console")</p><h1 id="dashboard-heading">@(groundView ? Model.Name : $"Welcome back, {Model.Name.Split(' ')[0]}.")</h1></div>
+        <div><p class="astra-eyebrow">@(groundView ? (medicView ? "Medic / Member health" : "Ground control / Health") : "Crew health console")</p><h1 id="dashboard-heading">@(groundView ? Model.Name : $"Welcome back, {Model.Name.Split(' ')[0]}.")</h1></div>
         <div class="health-header-actions">
-            @if (groundView) { <a class="btn astra-button astra-button--primary" asp-controller="Crew" asp-action="Index">← Crew Overview</a> }
-            <a class="btn astra-button astra-button--primary" asp-controller="@dashboardController" asp-action="@dashboardAction" asp-route-id="@Model.MemberId" asp-route-days="@Model.Days">Refresh readings ↻</a>
+            @if (groundView) { <a class="btn astra-button astra-button--primary" asp-controller="@Model.MemberController" asp-action="Index">← @(medicView ? "Crew Health" : "Crew Overview")</a> }
+            @if (medicView) { <a class="btn astra-button astra-button--primary" asp-controller="Home" asp-action="Dashboard">My health</a> }
+            @if (!groundView && User.IsInRole("Medic")) { <a class="btn astra-button astra-button--primary" asp-controller="Medic" asp-action="Index">Crew Health</a> }
+            <a class="btn astra-button astra-button--primary" asp-controller="@dashboardController" asp-action="@dashboardAction" asp-route-id="@Model.MemberId" asp-route-days="@Model.Days">Refresh <span aria-hidden="true">↻</span></a>
         </div>
     </header>
     @if (Model.Error is not null) { <div class="health-alert" role="alert">@Model.Error</div> }

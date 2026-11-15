@@ -8,6 +8,7 @@ public sealed class CrewDashboardModel
 {
     public int Days { get; init; } = 7;
     public string? MemberId { get; init; }
+    public string MemberController { get; init; } = "Crew";
     public string? Username { get; init; }
     public string? MemberRole { get; init; }
     public bool NeedsAttention => Error is not null || HealthSeverity.Rank(State) > 0 || State == "unknown" || Due;

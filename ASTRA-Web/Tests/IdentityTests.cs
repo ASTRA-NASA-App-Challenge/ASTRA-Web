@@ -345,6 +345,60 @@ public class IdentityTests
         Assert.NotNull(await users.FindByNameAsync("medic"));
     }
 
+    [Fact]
+    public async Task MedicsReadAllOnboardHealthWithoutReceivingOtherPinsOrManagementRights()
+    {
+        using var fixture = new IdentityFixture();
+        await IdentitySeeder.SeedAsync(fixture.Services, new ConfigurationBuilder().Build());
+        var members = fixture.Services.GetRequiredService<OnboardMemberService>();
+        var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
+        var ground = Principal("ground", AppRoles.GroundControl);
+        Assert.True((await members.CreateAsync(ground, "crew", AppRoles.Crew, "Alex", "Morgan", null)).Succeeded);
+        Assert.True((await members.CreateAsync(ground, "medic", AppRoles.Medic, "Sam", "Reed", null)).Succeeded);
+        var crew = (await users.FindByNameAsync("crew"))!;
+        var medic = (await users.FindByNameAsync("medic"))!;
+        var actor = Principal(medic.Id, AppRoles.Medic);
+        var clinical = new MedicMemberService(fixture.Services.GetRequiredService<ApplicationDbContext>(), fixture.Services.GetRequiredService<PinProtectionService>());
+        var roster = await clinical.GetMembersAsync(actor);
+        Assert.Equal(2, roster.Count);
+        Assert.Contains(roster, x => x.Id == crew.Id);
+        Assert.Contains(roster, x => x.Id == medic.Id);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => clinical.GetMembersAsync(Principal(crew.Id, AppRoles.Crew)));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => clinical.GetMembersAsync(new ClaimsPrincipal()));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetMembersAsync(actor));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => members.GetPinAsync(actor, crew.Id));
+        var admin = new ApplicationUser { UserName = "control", IsGroundControl = true };
+        Assert.True((await users.CreateAsync(admin, "Ground-Control!2026")).Succeeded);
+        Assert.True((await users.AddToRoleAsync(admin, AppRoles.Crew)).Succeeded);
+        Assert.DoesNotContain(await clinical.GetMembersAsync(actor), x => x.Id == admin.Id);
+
+        var client = new Web.Monitoring.MonitoringClient(new HttpClient(new ClinicalStub()) { BaseAddress = new("http://monitoring/") });
+        var controller = new Web.Controllers.MedicController(clinical, new Web.Monitoring.CrewHealthReader(client), client)
+        {
+            ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext
+            { HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext { User = actor } }
+        };
+        var detail = Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await controller.Health(crew.Id, default));
+        var model = Assert.IsType<Web.Models.CrewDashboardModel>(detail.Model);
+        Assert.Null(model.Pin);
+        Assert.Equal("Medic", model.MemberController);
+        Assert.Equal(crew.Id, model.MemberId);
+        var overview = Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await controller.Index(default));
+        var cards = Assert.IsType<Web.Models.CrewOverviewViewModel>(overview.Model);
+        Assert.True(cards.IsMedicView);
+        Assert.All(cards.Members, x => Assert.Null(x.Pin));
+        Assert.All(cards.Health.Values, x => Assert.Null(x.Pin));
+        Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(await controller.Health(admin.Id, default));
+        Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(await controller.HealthPhoto(admin.Id, "sample", default));
+    }
+
+    private sealed class ClinicalStub : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            { Content = new StringContent("{\"items\":[],\"next_cursor\":null}", System.Text.Encoding.UTF8, "application/json") });
+    }
+
     private static ClaimsPrincipal Principal(string id, string role) => new(new ClaimsIdentity([
         new Claim(ClaimTypes.NameIdentifier, id), new Claim(ClaimTypes.Role, role)
     ], "test"));
