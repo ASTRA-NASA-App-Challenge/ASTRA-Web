@@ -64,6 +64,33 @@ public class MonitoringClientTests
         await Assert.ThrowsAsync<ArgumentException>(() => client.RegisterAsync("../123", default));
     }
 
+    [Theory]
+    [InlineData(7)]
+    [InlineData(30)]
+    public async Task HistoryLoadsAllPagesWithStableTimeBounds(int days)
+    {
+        var queries = new List<string>();
+        var client = Client(new Stub(request =>
+        {
+            queries.Add(request.RequestUri!.Query);
+            var secondPage = request.RequestUri.Query.Contains("cursor=");
+            var measurements = request.RequestUri.AbsolutePath.EndsWith("measurements");
+            var item = measurements
+                ? """{"measurement_id":"sample","measured_at":"2026-11-15T10:00:00Z","pulse":{"bpm":72,"quality":"good"},"photo_url":null}"""
+                : """{"measured_at":"2026-11-15T10:00:00Z","temperature_c":22,"relative_humidity_percent":45}""";
+            var json = "{\"items\":[" + item + "],\"next_cursor\":" + (secondPage ? "null" : "\"cursor+/=\"") + "}";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
+        }));
+        var record = await client.ReadWindowAsync("012345", default, days);
+        Assert.Equal(2, record.Measurements.Count);
+        Assert.Equal(2, record.Environment.Count);
+        Assert.Equal(4, queries.Count);
+        Assert.Equal(queries[0], queries[2]);
+        Assert.StartsWith(queries[0] + "&cursor=", queries[1]);
+        var bounds = queries[0].TrimStart('?').Split('&').Select(x => x.Split('=', 2)).ToDictionary(x => x[0], x => Uri.UnescapeDataString(x[1]));
+        Assert.Equal(TimeSpan.FromDays(days), DateTimeOffset.Parse(bounds["to"]) - DateTimeOffset.Parse(bounds["from"]));
+    }
+
     private static MonitoringClient Client(HttpMessageHandler handler) => new(new HttpClient(handler) { BaseAddress = new("http://localhost/") });
     private sealed class Stub(Func<HttpRequestMessage, Task<HttpResponseMessage>> send) : HttpMessageHandler
     {

@@ -35,6 +35,30 @@ public sealed class MonitoringClient(HttpClient http)
         return await response.Content.ReadAsByteArrayAsync(ct);
     }
 
+    public async Task<MonitoringRecord> ReadWindowAsync(string pin, CancellationToken ct, int days = 7)
+    {
+        ValidatePin(pin);
+        if (days is not (7 or 30)) throw new ArgumentOutOfRangeException(nameof(days));
+        var to = DateTimeOffset.UtcNow;
+        var window = $"from={Uri.EscapeDataString(to.AddDays(-days).ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}&limit=100";
+        var measurements = new List<MeasurementSample>();
+        var environment = new List<EnvironmentSample>();
+        string? cursor = null;
+        do
+        {
+            var page = await http.GetFromJsonAsync<MeasurementPage>($"api/v1/crew/{pin}/measurements?{window}" + (cursor is null ? "" : "&cursor=" + Uri.EscapeDataString(cursor)), Json, ct);
+            measurements.AddRange(page?.Items ?? []);
+            cursor = page?.NextCursor;
+        } while (cursor is not null);
+        do
+        {
+            var page = await http.GetFromJsonAsync<EnvironmentPage>($"api/v1/crew/{pin}/environment-readings?{window}" + (cursor is null ? "" : "&cursor=" + Uri.EscapeDataString(cursor)), Json, ct);
+            environment.AddRange(page?.Items ?? []);
+            cursor = page?.NextCursor;
+        } while (cursor is not null);
+        return new(measurements, environment);
+    }
+
     public async Task DeleteAsync(string pin, CancellationToken ct)
     {
         ValidatePin(pin);

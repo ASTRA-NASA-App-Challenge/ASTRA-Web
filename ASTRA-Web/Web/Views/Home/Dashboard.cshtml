@@ -1,70 +1,74 @@
+@model CrewDashboardModel
 @{
-    ViewData["Title"] = "Astronaut dashboard";
+    ViewData["Title"] = "My health dashboard";
+    ViewData["FullWidth"] = true;
+    var latest = Model.Latest;
+    var history = Model.Record.Measurements.OrderByDescending(x => x.MeasuredAt).ToList();
+    var initials = string.Concat(Model.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => x[0]));
 }
-
-<section class="astra-dashboard" aria-labelledby="dashboard-heading">
-    <header class="astra-dashboard__header">
-        <div>
-            <p class="astra-eyebrow">Crew health console</p>
-            <h1 id="dashboard-heading">Welcome back, Alex.</h1>
-        </div>
-    </header>
-
+<section class="astra-dashboard astra-dashboard--live" data-health-dashboard aria-labelledby="dashboard-heading">
+    <header class="astra-dashboard__header"><div><p class="astra-eyebrow">Crew health console</p><h1 id="dashboard-heading">Welcome back, @Model.Name.Split(' ')[0].</h1></div><a class="btn astra-button astra-button--primary" asp-action="Dashboard" asp-route-days="@Model.Days">Refresh readings ↻</a></header>
+    @if (Model.Error is not null) { <div class="health-alert" role="alert">@Model.Error</div> }
     <div class="astra-dashboard__layout">
         <aside class="astra-dashboard__card astra-dashboard__card--stats">
-            <div class="astra-dashboard__card-heading">
-                <h2>My statistics</h2>
-                <span>Last 7 days</span>
-            </div>
-            <div class="astra-dashboard__chart" aria-label="Health trend example chart">
-                <span style="height: 34%" data-chart-tooltip="Monday: 62 bpm" tabindex="0" aria-label="Monday: 62 beats per minute"></span>
-                <span style="height: 48%" data-chart-tooltip="Tuesday: 66 bpm" tabindex="0" aria-label="Tuesday: 66 beats per minute"></span>
-                <span style="height: 42%" data-chart-tooltip="Wednesday: 64 bpm" tabindex="0" aria-label="Wednesday: 64 beats per minute"></span>
-                <span style="height: 67%" data-chart-tooltip="Thursday: 70 bpm" tabindex="0" aria-label="Thursday: 70 beats per minute"></span>
-                <span style="height: 58%" data-chart-tooltip="Friday: 68 bpm" tabindex="0" aria-label="Friday: 68 beats per minute"></span>
-                <span style="height: 78%" data-chart-tooltip="Saturday: 72 bpm" tabindex="0" aria-label="Saturday: 72 beats per minute"></span>
-                <span style="height: 72%" data-chart-tooltip="Sunday: 68 bpm" tabindex="0" aria-label="Sunday: 68 beats per minute"></span>
-            </div>
-            <div class="astra-dashboard__legend"><span>Heart rate</span><strong>68 bpm</strong></div>
-            <div class="astra-dashboard__legend"><span>Sleep</span><strong>7h 42m</strong></div>
-            <div class="astra-dashboard__legend"><span>Mood</span><strong>Good</strong></div>
+            <div class="astra-dashboard__card-heading"><h2>My statistics</h2><span>Last @Model.Days days</span></div>
+            <label class="health-chart-select">Measurement<select class="form-select" data-history-select><option value="pulse">Heart rate · bpm</option><option value="temperature">Cabin temperature · °C</option><option value="humidity">Cabin humidity · %</option></select></label>
+                <nav class="health-period" aria-label="History period"><a asp-action="Dashboard" asp-route-days="7" aria-current="@(Model.Days == 7 ? "page" : null)">Week</a><a asp-action="Dashboard" asp-route-days="30" aria-current="@(Model.Days == 30 ? "page" : null)">Month · 30 days</a></nav><div class="health-line-chart" data-history-chart aria-label="Measurement history line chart"></div>
+                <p class="health-chart-note" data-chart-note></p>
+            <details class="health-records">
+                <summary>Measurement history <span aria-hidden="true">›</span></summary>
+                <div class="health-table-scroll" tabindex="0" role="region" aria-label="Recorded measurements">
+                    <table class="health-table">
+                        <thead><tr><th scope="col">Time (UTC)</th><th scope="col" data-history-value-heading>Heart rate · bpm</th><th scope="col" data-history-signal-heading>Signal</th></tr></thead>
+                        <tbody data-history-table>
+                        @foreach (var row in history)
+                        {
+                            <tr><td>@row.MeasuredAt.ToString("dd MMM HH:mm")</td><td>@(row.Pulse.Bpm > 0 ? $"{row.Pulse.Bpm} bpm" : "Not measured")</td><td>@row.Pulse.Quality</td></tr>
+                        }
+                        @if (history.Count == 0) { <tr><td colspan="3">No measurements in this period.</td></tr> }
+                        </tbody>
+                    </table>
+                </div>
+            </details>
         </aside>
-
         <div class="astra-dashboard__main">
-            <article class="astra-dashboard__card astra-dashboard__profile">
-                <div class="astra-avatar" aria-hidden="true">BM</div>
-                <div>
-                    <p class="astra-eyebrow">Crew member</p>
-                    <h2>Berk Boyanov Manolov</h2>
-                    <p>@User.Identity?.Name</p>
-                </div>
-                <div class="astra-dashboard__profile-link">
-                    <span>PIN</span>
-                    <strong>123456</strong>
-                </div>
-            </article>
-
+            <article class="astra-dashboard__card astra-dashboard__profile"><div class="astra-avatar" aria-hidden="true">@initials</div><div><p class="astra-eyebrow">Crew member</p><h2>@Model.Name</h2><p>@User.Identity?.Name</p></div><div class="astra-dashboard__profile-link">            @if (Model.Pin is not null) {
+                <span>PIN</span><strong>@Model.Pin</strong>
+            }
+</div></article>
             <article class="astra-dashboard__card astra-dashboard__info">
-                <div class="astra-dashboard__card-heading">
-                    <h2>Latest health information</h2>
-                    <span>Today, 08:42 UTC</span>
-                </div>
-                <div class="astra-dashboard__metrics">
-                    <div><span>Blood pressure</span><strong>118/76 <small>mmHg</small></strong><em class="astra-metric-good">Normal</em></div>
-                    <div><span>Body temperature</span><strong>36.7 <small>°C</small></strong><em class="astra-metric-good">Normal</em></div>
-                    <div><span>Blood oxygen</span><strong>98 <small>%</small></strong><em class="astra-metric-good">Normal</em></div>
-                    <div><span>Stress level</span><strong>Low</strong><em class="astra-metric-good">On track</em></div>
-                </div>
+                <div class="astra-dashboard__card-heading"><h2>Latest health information</h2><span>@(latest?.MeasuredAt.ToString("dd MMM, HH:mm 'UTC'") ?? "Not measured")</span></div>
+                <div class="astra-dashboard__metrics">                @foreach (var metric in Model.Metrics) {
+                    <div class="state-@metric.State">
+                        <p>@metric.Name</p><strong>@metric.Value @if(metric.Value != "Not measured") { <small>@metric.Unit</small> }</strong>
+                        <span class="health-status">@(metric.State == "good" ? "In range" : metric.State == "review" ? "Review reading" : metric.At is null ? "Not measured" : "Repeat reading")</span>
+                        <time>@(metric.At?.ToString("dd MMM, HH:mm 'UTC'") ?? "No sensor reading")</time>
+                        @if(metric.At is not null && Model.Now - metric.At.Value > TimeSpan.FromHours(6)) { <p class="health-stale">Reading over 6 hours old</p> }
+                        @if (metric.State == "review") { <button class="health-text-button" data-bs-toggle="modal" data-bs-target="#health-guide">What should I do? ↗</button> }
+                    </div>
+                }
+</div>
+                @if (CrewDashboardModel.PulseState(latest) == "review") { <p class="health-alert" role="alert">Pulse is outside the adult resting reference. Repeat at rest; contact the medic if it persists.</p> }
+                @if (latest is not null && CrewDashboardModel.PulseState(latest) == "unknown") { <p class="health-alert">Pulse signal is unreliable. Check sensor contact and repeat the reading.</p> }
+                @if (Model.CabinState == "review") { <p class="health-alert" role="alert">Cabin screening warning. Report unexpected readings to ground control.</p> }
             </article>
+            <article class="astra-dashboard__card astra-dashboard__notice"><span class="astra-dashboard__notice-icon" aria-hidden="true">✦</span><div><h2>@(Model.Due ? "Check-in due" : "Next check-in")</h2><p>Every six hours · <strong data-check-countdown data-due="@Model.NextCheck?.ToString("O")">@(Model.Due ? "Take a new device reading." : Model.NextCheck?.ToString("dd MMM, HH:mm 'UTC'"))</strong></p></div><button class="btn astra-button astra-button--primary" data-bs-toggle="modal" data-bs-target="#health-guide">Start check-in</button></article>
+            <section class="astra-dashboard__card astra-dashboard__info health-photo"><div><p class="astra-eyebrow">Camera capture</p><h2>Latest available photo</h2><p>@(Model.Photo?.MeasuredAt.ToString("dd MMM yyyy, HH:mm 'UTC'") ?? "No photo received in this period")</p></div>
+                @if (Model.Photo is not null) { <img src="@Url.Action("DashboardPhoto", new { id = Model.Photo.MeasurementId })" alt="Your latest monitoring capture" data-health-photo /><p data-photo-error hidden>Photo unavailable. It may still be uploading; refresh to retry.</p> }
+                else { <div class="health-photo-empty">No photo available</div> }
+            </section>
 
-            <article class="astra-dashboard__card astra-dashboard__notice">
-                <span class="astra-dashboard__notice-icon" aria-hidden="true">✦</span>
-                <div>
-                    <h2>Next check-in</h2>
-                    <p>Your daily health assessment is due in <strong>04:18:32</strong>.</p>
-                </div>
-                <button class="btn astra-button astra-button--primary" type="button">Start check-in</button>
-            </article>
         </div>
+        <partial name="_BodyStatus" model="Model" />
     </div>
 </section>
+<div class="modal fade astra-member-modal" id="health-guide" tabindex="-1" aria-labelledby="health-guide-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h2 id="health-guide-title">Check-in & health guidance</h2><button class="astra-modal-close" data-bs-dismiss="modal" aria-label="Close guidance">×</button></div><div class="modal-body health-guidance">
+    <p>Follow your mission procedures and the onboard medic’s advice.</p>
+    <h3>Take your six-hour check-in</h3><ol><li>Use the onboard device and sign in with your own PIN.</li><li>Rest before measuring, keep still and ensure the pulse sensor has steady contact. Follow your hardware’s operating instructions.</li><li>Let the device send the pulse, cabin readings and camera capture. Then refresh this dashboard. Opening this dialog does not take a measurement.</li></ol>
+    <h3>Pulse outside the reference range</h3><p>The general adult resting reference is 60–100 bpm. Fitness, sleep, medication and recent exercise affect it. A result outside this range requires context, not an automatic diagnosis.</p><p>Rest and repeat the reading. To cross-check manually, place your index and middle fingers gently on the artery inside your wrist and count beats for 60 seconds. If unusual readings persist, ask the medic to assess them. Use ECG or other medical equipment only under trained supervision and the equipment instructions.</p>
+    <h3>Seek immediate help for symptoms</h3><p>Chest pain, fainting, severe breathlessness or marked dizziness warrant immediate medic assistance and mission emergency procedures, regardless of the colour displayed here.</p>
+    <h3>Cabin temperature & humidity</h3><p>These are cabin readings, not body measurements. Check sensor placement and repeat unexpected readings. Report persistent warnings to ground control; do not change life-support controls yourself.</p>
+    <details><summary>References</summary><p><a href="https://www.heart.org/en/health-topics/high-blood-pressure/the-facts-about-high-blood-pressure/all-about-heart-rate-pulse" target="_blank" rel="noopener">American Heart Association: pulse measurement</a> · <a href="https://www.asc-csa.gc.ca/eng/sciences/bio-monitor.asp" target="_blank" rel="noopener">Canadian Space Agency: Bio-Monitor and onboard medical tools</a> · <a href="https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/?tab=details" target="_blank" rel="noopener">Space Apps challenge</a></p></details>
+</div></div></div></div>
+<script type="application/json" id="health-history-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { pulse = history.OrderBy(x => x.MeasuredAt).Select(x => new { at = x.MeasuredAt, value = x.Pulse.Bpm > 0 ? (int?)x.Pulse.Bpm : null, quality = x.Pulse.Quality }), temperature = Model.Record.Environment.OrderBy(x => x.MeasuredAt).Select(x => new { at = x.MeasuredAt, value = x.TemperatureC }), humidity = Model.Record.Environment.OrderBy(x => x.MeasuredAt).Select(x => new { at = x.MeasuredAt, value = x.RelativeHumidityPercent }) }))</script>
+@section Scripts { <script src="~/js/crew-dashboard.js" asp-append-version="true"></script> }
