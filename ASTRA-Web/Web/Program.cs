@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Services.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+DotEnvConfiguration.Add(builder.Configuration, builder.Environment.ContentRootPath, args);
 
 // Add services to the container.
 var configuredConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -156,3 +157,4 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
+

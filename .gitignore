@@ -438,3 +438,7 @@ ASTRA-Web/Web/astra.db-shm
 ASTRA-Web/Web/astra.db-wal
 
 **.DS_Store
+
+.env
+.env.*
+!.env.example
