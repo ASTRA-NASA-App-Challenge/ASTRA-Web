@@ -84,7 +84,21 @@ if (crewRoster) {
         ordered.forEach((card) => fragment.append(card));
         grid.append(fragment);
     };
+    let rosterRendered = false;
+    const rosterAnimations = new Set();
+    const playRosterAnimation = (element, frames, options, cleanup) => {
+        const animation = element.animate(frames, options);
+        rosterAnimations.add(animation);
+        const finish = () => { rosterAnimations.delete(animation); cleanup?.(); };
+        animation.onfinish = finish;
+        animation.oncancel = finish;
+    };
     const update = () => {
+        const before = new Map(cards.filter(card => !card.hidden).map(card => [card, card.getBoundingClientRect()]));
+        const oldHeight = grid.getBoundingClientRect().height;
+        rosterAnimations.forEach(animation => animation.cancel());
+        const emptyWasHidden = empty.hidden;
+        sortMembers();
         const query = normalize(search.value.trim());
         let visible = 0;
         cards.forEach((card) => {
@@ -97,9 +111,39 @@ if (crewRoster) {
         reset.hidden = !query && role === "all" && !attentionOnly;
         results.textContent = `${visible} of ${cards.length} ${cards.length === 1 ? "member" : "members"}`;
         filters.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.crewFilter === role)));
+        if (rosterRendered) {
+            const options = { duration: 300, easing: 'cubic-bezier(.2,.7,.2,1)' };
+            cards.forEach(card => {
+                card.style.animation = 'none';
+                const old = before.get(card);
+                if (card.hidden && old) {
+                    // Keep a non-interactive visual copy while the real card leaves the grid.
+                    const ghost = card.cloneNode(true);
+                    ghost.hidden = false;
+                    ghost.inert = true;
+                    ghost.setAttribute('aria-hidden', 'true');
+                    ghost.removeAttribute('data-crew-member');
+                    ghost.removeAttribute('id');
+                    ghost.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+                    Object.assign(ghost.style, {position:'fixed', left:old.left+'px', top:old.top+'px', width:old.width+'px', height:old.height+'px', margin:'0', zIndex:'100', pointerEvents:'none', animation:'none'});
+                    document.body.append(ghost);
+                    playRosterAnimation(ghost, [{opacity:1, transform:'scale(1)'}, {opacity:0, transform:'translateY(8px) scale(.97)'}], {duration:200, easing:'ease-out'}, () => ghost.remove());
+                } else if (!card.hidden) {
+                    const next = card.getBoundingClientRect();
+                    playRosterAnimation(card, old ? [
+                        {transform:'translate('+(old.left-next.left)+'px,'+(old.top-next.top)+'px)'},
+                        {transform:'translate(0,0)'}
+                    ] : [{opacity:0, transform:'translateY(12px) scale(.98)'}, {opacity:1, transform:'translateY(0) scale(1)'}], options);
+                }
+            });
+            const newHeight = grid.getBoundingClientRect().height;
+            if (oldHeight !== newHeight) playRosterAnimation(grid, [{height:oldHeight+'px'}, {height:newHeight+'px'}], options);
+            if (emptyWasHidden && !empty.hidden) playRosterAnimation(empty, [{opacity:0, transform:'translateY(8px)'}, {opacity:1, transform:'translateY(0)'}], options);
+        }
+        rosterRendered = true;
     };
     search.addEventListener("input", update);
-    sort.addEventListener("change", () => { sortMembers(); update(); });
+    sort.addEventListener("change", update);
     filters.forEach((button) => button.addEventListener("click", () => { role = button.dataset.crewFilter; update(); }));
     reset.addEventListener("click", () => { search.value = ""; role = "all"; attentionOnly = false; attention?.setAttribute("aria-pressed", "false"); update(); search.focus(); });
     crewRoster.querySelectorAll("[data-crew-reveal]").forEach((button) => {
@@ -128,7 +172,6 @@ if (crewRoster) {
             feedbackTimer = setTimeout(() => { feedback.classList.remove("is-visible"); }, 3500);
         });
     });
-    sortMembers();
     update();
 }
 

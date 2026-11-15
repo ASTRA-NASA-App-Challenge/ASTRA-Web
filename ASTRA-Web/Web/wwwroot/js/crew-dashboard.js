@@ -26,7 +26,7 @@
             tableAnimation = null;
         };
     });
-    const data = JSON.parse(document.getElementById('health-history-data').textContent);
+    let data = JSON.parse(document.getElementById('health-history-data').textContent);
     const chart = root.querySelector('[data-history-chart]');
     const selector = root.querySelector('[data-history-select]');
     const note = root.querySelector('[data-chart-note]');
@@ -35,7 +35,22 @@
     let activePopup;
     let activePoint;
     const closePopup = () => {
-        activePopup?.dispose();
+        if (activePopup && activePoint) {
+            const popup = document.getElementById(activePoint.getAttribute('aria-describedby'));
+            if (popup) {
+                const leaving = popup.cloneNode(true);
+                leaving.removeAttribute('id');
+                leaving.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+                leaving.setAttribute('aria-hidden', 'true');
+                leaving.inert = true;
+                leaving.style.pointerEvents = 'none';
+                const opacity = getComputedStyle(popup).opacity;
+                popup.parentElement.append(leaving);
+                const fade = leaving.animate([{opacity, scale:1}, {opacity:0, scale:.97}], {duration:180, easing:'ease-out', fill:'forwards'});
+                fade.onfinish = () => leaving.remove();
+            }
+            activePopup.dispose();
+        }
         activePoint?.setAttribute('aria-expanded', 'false');
         activePopup = null;
         activePoint = null;
@@ -132,6 +147,8 @@
         const date = at=>new Date(at).toLocaleString('en-GB',{timeZone:'UTC',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
         svg.append(el('text',{x:50,y:225,fill:'#9fb4c4','font-size':14},date(rows[0].at)),el('text',{x:650,y:225,'text-anchor':'end',fill:'#9fb4c4','font-size':14},date(rows.at(-1).at)));
         chart.append(svg);
+        svg.animate([{opacity:0, transform:"translateY(6px)"}, {opacity:1, transform:"translateY(0)"}], {duration:260, easing:"ease-out"});
+        if (records.open) table.animate([{opacity:.4}, {opacity:1}], {duration:220, easing:"ease-out"});
         note.textContent='All times UTC · Select a point for details.';
         let summary = root.querySelector('[data-history-summary]');
         if (!summary) { summary=document.createElement('p'); summary.dataset.historySummary=''; summary.className='health-summary'; chart.after(summary); }
@@ -140,6 +157,66 @@
         if (selector.value==='pulse' && rows.some(x=>x.quality!=='good')) summary.textContent+=' · Includes low-quality readings (grey).';
     };
     selector.addEventListener('change', render); render();
+    const periodNav = root.querySelector('.health-period');
+    const statistics = periodNav.closest('.astra-dashboard__card--stats');
+    const periodStatus = root.querySelector('[data-history-period-status]');
+    let periodRequest;
+    let periodRequestId = 0;
+    let changingPeriod = false;
+    periodNav.addEventListener('click', async event => {
+        const link = event.target.closest('a');
+        if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        if (link.getAttribute('aria-current') === 'page' && !changingPeriod) return;
+        periodRequest?.abort();
+        const requestId = ++periodRequestId;
+        const controller = new AbortController();
+        periodRequest = controller;
+        const timeout = setTimeout(() => controller.abort(), 35000);
+        changingPeriod = true;
+        closePopup();
+        statistics.setAttribute('aria-busy', 'true');
+        statistics.classList.add('is-loading');
+        chart.inert = true;
+        periodStatus.textContent = 'Loading history…';
+        try {
+            // Reuse the existing authorized page route for every viewer role.
+            // Parse its data only; never replace the document or execute returned scripts.
+            const response = await fetch(link.href, {signal:controller.signal, cache:'no-store', credentials:'same-origin'});
+            if (requestId !== periodRequestId) return;
+            if (response.redirected) { location.assign(response.url); return; }
+            if (!response.ok) throw new Error('History unavailable');
+            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const payload = page.getElementById('health-history-data');
+            if (!payload) throw new Error('History unavailable');
+            const next = JSON.parse(payload.textContent);
+            if (next.error || !['pulse','temperature','humidity'].every(key => Array.isArray(next[key]))) throw new Error('History unavailable');
+            if (requestId !== periodRequestId) return;
+            data = next;
+            document.getElementById('health-history-data').textContent = payload.textContent;
+            root.querySelector('[data-history-period-label]').textContent = page.querySelector('[data-history-period-label]').textContent;
+            periodNav.querySelectorAll('a').forEach(item => {
+                if (item === link) item.setAttribute('aria-current', 'page');
+                else item.removeAttribute('aria-current');
+            });
+            root.querySelector('[data-dashboard-refresh]').href = link.href;
+            history.replaceState(null, '', link.href);
+            render();
+            periodStatus.textContent = '';
+        } catch {
+            if (requestId === periodRequestId) periodStatus.textContent = 'History could not be loaded. Your current view is unchanged. Try again.';
+        } finally {
+            clearTimeout(timeout);
+            if (requestId === periodRequestId) {
+                changingPeriod = false;
+                periodRequest = null;
+                statistics.removeAttribute('aria-busy');
+                statistics.classList.remove('is-loading');
+                chart.inert = false;
+            }
+        }
+    });
+
     const countdown = root.querySelector('[data-check-countdown]');
     const tick = () => {
         const due = Date.parse(countdown.dataset.due);
@@ -152,6 +229,6 @@
     const photoError = () => { photo.hidden=true; root.querySelector('[data-photo-error]').hidden=false; };
     if(photo) { photo.addEventListener('error',photoError); if(photo.complete && !photo.naturalWidth) photoError(); }
     // Refresh only when the member is viewing the page and no modal is open.
-    setInterval(()=>{if(!document.hidden && !document.querySelector('.modal.show') && !activePopup) location.reload();},60000);
+    setInterval(()=>{if(!document.hidden && !document.querySelector('.modal.show') && !activePopup && !changingPeriod) location.reload();},60000);
 })();
 

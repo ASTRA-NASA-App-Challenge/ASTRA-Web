@@ -1374,3 +1374,20 @@ label {
 .health-header-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:.75rem; flex-shrink:0; }
 .health-header-actions .astra-button { white-space:nowrap; }
 @media(max-width:1000px) { .astra-dashboard--live .astra-dashboard__header { flex-wrap:wrap; } .health-header-actions { justify-content:flex-start; } }
+/* Interactive feedback complements the existing entrance and orbital animations. */
+.astra-roster__grid { align-content:start; }
+.astra-button { transition:transform 180ms ease, background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease; }
+.astra-button:hover { transform:translateY(-2px); }
+.astra-button:active { transform:translateY(0) scale(.98); }
+.astra-roster__filters button,.astra-roster__health-summary button { transition:background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease; }
+.astra-roster__filters button:active,.astra-roster__health-summary button:active { transform:scale(.96); }
+.astra-member__tool,.astra-member__actions button { transition:background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease; }
+.astra-member__tool:hover,.astra-member__actions button:hover { transform:translateY(-2px); }
+.health-period a { transition:background-color 180ms ease, border-color 180ms ease, color 180ms ease; }
+.health-line-chart circle { transition:r 150ms ease, stroke-width 150ms ease; }
+.health-line-chart circle:hover,.health-line-chart circle:focus-visible { r:8; }
+.health-point-popup.fade { transition:opacity 180ms ease; }
+.health-line-chart { transition:opacity 180ms ease; }
+.astra-dashboard__card--stats.is-loading .health-line-chart { opacity:.45; }
+.health-period-feedback { color:#f6d567; font-size:.85rem; margin:1rem 0; }
+.health-period-feedback:empty { display:none; }

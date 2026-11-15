@@ -20,16 +20,17 @@
             @if (groundView) { <a class="btn astra-button astra-button--primary" asp-controller="@Model.MemberController" asp-action="Index">← @(medicView ? "Crew Health" : "Crew Overview")</a> }
             @if (medicView) { <a class="btn astra-button astra-button--primary" asp-controller="Home" asp-action="Dashboard">My health</a> }
             @if (!groundView && User.IsInRole("Medic")) { <a class="btn astra-button astra-button--primary" asp-controller="Medic" asp-action="Index">Crew Health</a> }
-            <a class="btn astra-button astra-button--primary" asp-controller="@dashboardController" asp-action="@dashboardAction" asp-route-id="@Model.MemberId" asp-route-days="@Model.Days">Refresh <span aria-hidden="true">↻</span></a>
+            <a class="btn astra-button astra-button--primary" asp-controller="@dashboardController" asp-action="@dashboardAction" asp-route-id="@Model.MemberId" asp-route-days="@Model.Days" data-dashboard-refresh>Refresh <span aria-hidden="true">↻</span></a>
         </div>
     </header>
     @if (Model.Error is not null) { <div class="health-alert" role="alert">@Model.Error</div> }
     <div class="astra-dashboard__layout">
         <aside class="astra-dashboard__card astra-dashboard__card--stats">
-            <div class="astra-dashboard__card-heading"><h2>My statistics</h2><span>Last @Model.Days days</span></div>
+            <div class="astra-dashboard__card-heading"><h2>My statistics</h2><span data-history-period-label>Last @Model.Days days</span></div>
             <label class="health-chart-select">Measurement<select class="form-select" data-history-select><option value="pulse">Heart rate · bpm</option><option value="temperature">Cabin temperature · °C</option><option value="humidity">Cabin humidity · %</option></select></label>
                 <nav class="health-period" aria-label="History period"><a asp-controller="@dashboardController" asp-action="@dashboardAction" asp-route-id="@Model.MemberId" asp-route-days="7" aria-current="@(Model.Days == 7 ? "page" : null)">Week</a><a asp-controller="@dashboardController" asp-action="@dashboardAction" asp-route-id="@Model.MemberId" asp-route-days="30" aria-current="@(Model.Days == 30 ? "page" : null)">Month · 30 days</a></nav><div class="health-line-chart" data-history-chart aria-label="Measurement history line chart"></div>
                 <p class="health-chart-note" data-chart-note></p>
+                <p class="health-period-feedback" data-history-period-status role="status" aria-live="polite"></p>
             <details class="health-records">
                 <summary>Measurement history <span aria-hidden="true">›</span></summary>
                 <div class="health-table-scroll" tabindex="0" role="region" aria-label="Recorded measurements">
@@ -84,5 +85,5 @@
     <h3>Seek immediate help for symptoms</h3><p>Chest pain, fainting, severe breathlessness or marked dizziness warrant immediate medic assistance and mission emergency procedures, regardless of the colour displayed here.</p>
     <h3>Cabin temperature & humidity</h3><p>These are cabin readings, not body measurements. Check sensor placement and repeat unexpected readings. Report persistent warnings to ground control; do not change life-support controls yourself.</p>
 </div></div></div></div>
-<script type="application/json" id="health-history-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { pulse = history.OrderBy(x => x.MeasuredAt).Select(x => new { at = x.MeasuredAt, value = x.Pulse.Bpm > 0 ? (int?)x.Pulse.Bpm : null, quality = x.Pulse.Quality, state = CrewDashboardModel.PulseState(x), status = HealthSeverity.Label(CrewDashboardModel.PulseState(x)) }), temperature = Model.Record.Environment.OrderBy(x => x.MeasuredAt).Select(x => new { at = x.MeasuredAt, value = x.TemperatureC, state = HealthSeverity.Temperature(x.TemperatureC), status = HealthSeverity.Label(HealthSeverity.Temperature(x.TemperatureC)) }), humidity = Model.Record.Environment.OrderBy(x => x.MeasuredAt).Select(x => new { at = x.MeasuredAt, value = x.RelativeHumidityPercent, state = HealthSeverity.Humidity(x.RelativeHumidityPercent), status = HealthSeverity.Label(HealthSeverity.Humidity(x.RelativeHumidityPercent)) }) }))</script>
+<script type="application/json" id="health-history-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { error = Model.Error, pulse = history.OrderBy(x => x.MeasuredAt).Select(x => new { at = x.MeasuredAt, value = x.Pulse.Bpm > 0 ? (int?)x.Pulse.Bpm : null, quality = x.Pulse.Quality, state = CrewDashboardModel.PulseState(x), status = HealthSeverity.Label(CrewDashboardModel.PulseState(x)) }), temperature = Model.Record.Environment.OrderBy(x => x.MeasuredAt).Select(x => new { at = x.MeasuredAt, value = x.TemperatureC, state = HealthSeverity.Temperature(x.TemperatureC), status = HealthSeverity.Label(HealthSeverity.Temperature(x.TemperatureC)) }), humidity = Model.Record.Environment.OrderBy(x => x.MeasuredAt).Select(x => new { at = x.MeasuredAt, value = x.RelativeHumidityPercent, state = HealthSeverity.Humidity(x.RelativeHumidityPercent), status = HealthSeverity.Label(HealthSeverity.Humidity(x.RelativeHumidityPercent)) }) }))</script>
 @section Scripts { <script src="~/js/crew-dashboard.js" asp-append-version="true"></script> }
