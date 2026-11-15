@@ -7,9 +7,11 @@ namespace Data
 {
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
     {
+        public DbSet<MonitoringPinReservation> MonitoringPinReservations => Set<MonitoringPinReservation>();
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.Entity<MonitoringPinReservation>().HasKey(x => x.PinLookup);
             // Identity exposes these framework properties, but ASTRA does not persist or use them.
             builder.Entity<ApplicationUser>().Ignore(user => user.Email);
             builder.Entity<ApplicationUser>().Ignore(user => user.NormalizedEmail);

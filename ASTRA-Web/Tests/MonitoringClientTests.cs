@@ -8,7 +8,7 @@ public class MonitoringClientTests
 {
     [Theory]
     [InlineData(HttpStatusCode.Created)]
-    [InlineData(HttpStatusCode.Conflict)]
+    [InlineData(HttpStatusCode.OK)]
     public async Task RegistrationPreservesLeadingZeroesAndSupportsRetries(HttpStatusCode status)
     {
         var handler = new Stub(async request =>
@@ -35,7 +35,7 @@ public class MonitoringClientTests
             Assert.StartsWith("/api/v1/crew/012345/", request.RequestUri!.AbsolutePath);
             var json = request.RequestUri.AbsolutePath.EndsWith("measurements")
                 ? """{"items":[{"measurement_id":"mea_test","measured_at":"2026-11-15T10:00:00Z","pulse":{"bpm":72,"quality":"good"},"photo_url":"ignored"}],"next_cursor":null}"""
-                : """[{"measured_at":"2026-11-15T10:00:00Z","temperature_c":22.5,"relative_humidity_percent":45}]""";
+                : """{"items":[{"measured_at":"2026-11-15T10:00:00Z","temperature_c":22.5,"relative_humidity_percent":45}],"next_cursor":null}""";
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
         }));
         var record = await client.ReadAsync("012345", default);

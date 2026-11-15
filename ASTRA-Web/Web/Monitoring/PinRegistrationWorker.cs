@@ -17,10 +17,13 @@ public sealed class PinRegistrationWorker(IServiceScopeFactory scopes, ILogger<P
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 var protection = scope.ServiceProvider.GetRequiredService<PinProtectionService>();
                 var client = scope.ServiceProvider.GetRequiredService<MonitoringClient>();
+                try { await scope.ServiceProvider.GetRequiredService<MonitoringDeletionProcessor>().ProcessAsync(stoppingToken); }
+                catch (AggregateException) { logger.LogWarning("Some monitoring cleanup is still queued; other PINs will continue syncing."); }
                 var members = await db.Users.AsNoTracking().Where(x => !x.IsGroundControl && x.ProtectedPin != null).ToListAsync(stoppingToken);
                 foreach (var member in members)
                 {
                     try { await client.RegisterAsync(protection.Reveal(member.Id, member.ProtectedPin!), stoppingToken); }
+                    catch (HttpRequestException) { logger.LogWarning("A PIN registration failed; retrying on the next pass."); }
                     catch (System.Security.Cryptography.CryptographicException) { logger.LogWarning("A member PIN could not be decrypted for monitoring registration."); }
                 }
             }

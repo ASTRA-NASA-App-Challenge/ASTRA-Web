@@ -31,7 +31,7 @@ public class CrewController(OnboardMemberService members) : Controller
                     if (created.Pin is not null)
                         await HttpContext.RequestServices.GetRequiredService<Web.Monitoring.MonitoringClient>().RegisterAsync(created.Pin, cancellationToken);
                 }
-                catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
+                catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or AggregateException)
                 {
                     TempData["CrewNotice"] += " Monitoring registration is pending and will retry automatically.";
                 }
@@ -106,6 +106,9 @@ public class CrewController(OnboardMemberService members) : Controller
         if (result.Succeeded)
         {
             TempData["CrewNotice"] = $"{member.FullName} was removed from the onboard team.";
+            try { await HttpContext.RequestServices.GetRequiredService<Web.Monitoring.MonitoringDeletionProcessor>().ProcessAsync(cancellationToken); }
+            catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or AggregateException)
+            { TempData["CrewNotice"] += " Monitoring cleanup is queued and will retry automatically."; }
             return RedirectToAction(nameof(Index));
         }
         if (result.Errors.Any(error => error.Code == "MemberNotFound")) return NotFound();
@@ -119,4 +122,3 @@ public class CrewController(OnboardMemberService members) : Controller
         });
     }
 }
-

@@ -17,6 +17,25 @@ namespace Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.15");
 
+            modelBuilder.Entity("Data.MonitoringPinReservation", b =>
+                {
+                    b.Property<string>("PinLookup")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("DeletionPending")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ProtectedPin")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProtectionId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("PinLookup");
+
+                    b.ToTable("MonitoringPinReservations");
+                });
+
             modelBuilder.Entity("Entities.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")

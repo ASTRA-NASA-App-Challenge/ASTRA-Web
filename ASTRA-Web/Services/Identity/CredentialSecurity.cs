@@ -37,7 +37,7 @@ namespace Services.Identity
                 return IdentityResult.Failed(new IdentityError { Code = "InvalidPin", Description = "The password must be exactly six digits (0–9)." });
 
             var lookup = pins.Compute(password);
-            if (await db.Users.AnyAsync(other => other.Id != user.Id && other.PinLookup == lookup))
+            if (await db.Users.AnyAsync(other => other.Id != user.Id && other.PinLookup == lookup) || await db.MonitoringPinReservations.AnyAsync(x => x.PinLookup == lookup))
                 return IdentityResult.Failed(new IdentityError { Code = "PinUnavailable", Description = "This PIN is unavailable. Choose another six-digit PIN." });
 
             return IdentityResult.Success;

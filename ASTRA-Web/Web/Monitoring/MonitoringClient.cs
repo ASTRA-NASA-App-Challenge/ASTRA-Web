@@ -13,7 +13,7 @@ public sealed class MonitoringClient(HttpClient http)
     {
         ValidatePin(pin);
         using var response = await http.PostAsJsonAsync("api/v1/crew", new { pin }, Json, ct);
-        if (response.StatusCode != HttpStatusCode.Conflict) response.EnsureSuccessStatusCode();
+        response.EnsureSuccessStatusCode();
     }
 
     public async Task<MonitoringRecord> ReadAsync(string pin, CancellationToken ct)
@@ -21,8 +21,8 @@ public sealed class MonitoringClient(HttpClient http)
         ValidatePin(pin);
         var prefix = $"api/v1/crew/{pin}/";
         var measurements = await http.GetFromJsonAsync<MeasurementPage>(prefix + "measurements?limit=100", Json, ct);
-        var readings = await http.GetFromJsonAsync<List<EnvironmentSample>>(prefix + "environment-readings?limit=100", Json, ct);
-        return new(measurements?.Items ?? [], readings ?? []);
+        var readings = await http.GetFromJsonAsync<EnvironmentPage>(prefix + "environment-readings?limit=100", Json, ct);
+        return new(measurements?.Items ?? [], readings?.Items ?? []);
     }
 
     public async Task<byte[]?> PhotoAsync(string pin, string measurementId, CancellationToken ct)
@@ -33,6 +33,13 @@ public sealed class MonitoringClient(HttpClient http)
         response.EnsureSuccessStatusCode();
         if (response.Content.Headers.ContentType?.MediaType != "image/jpeg") throw new HttpRequestException("Unexpected photo format.");
         return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    public async Task DeleteAsync(string pin, CancellationToken ct)
+    {
+        ValidatePin(pin);
+        using var response = await http.DeleteAsync($"api/v1/crew/{pin}", ct);
+        response.EnsureSuccessStatusCode();
     }
 
     private static void ValidatePin(string pin)
@@ -47,3 +54,5 @@ public sealed record PulseSample(int Bpm, string Quality, string? StatusReason);
 public sealed record EnvironmentSample(DateTimeOffset MeasuredAt, double TemperatureC, double RelativeHumidityPercent);
 public sealed record MonitoringRecord(List<MeasurementSample> Measurements, List<EnvironmentSample> Environment);
 public sealed record MonitoringPage(string MemberId, string Name, MonitoringRecord? Record, string? Error);
+
+public sealed record EnvironmentPage(List<EnvironmentSample> Items, string? NextCursor);

@@ -214,7 +214,7 @@ public class IdentityTests
         Assert.Null((await db.Users.SingleAsync()).Email);
         Assert.Null((await db.Users.SingleAsync()).NormalizedEmail);
         Assert.False((await db.Users.SingleAsync()).EmailConfirmed);
-        Assert.Equal(6, (await db.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(db.Database.GetMigrations().Count(), (await db.Database.GetAppliedMigrationsAsync()).Count());
         await IdentityDatabaseInitializer.InitializeAsync(db);
         Assert.Single(await db.Users.ToListAsync());
     }
@@ -348,6 +348,56 @@ public class IdentityTests
     private static ClaimsPrincipal Principal(string id, string role) => new(new ClaimsIdentity([
         new Claim(ClaimTypes.NameIdentifier, id), new Claim(ClaimTypes.Role, role)
     ], "test"));
+
+    [Fact]
+    public async Task DeletedMemberQueuesDurableCleanupAndKeepsPinReserved()
+    {
+        using var fixture = new IdentityFixture();
+        await IdentitySeeder.SeedAsync(fixture.Services, new ConfigurationBuilder().Build());
+        var members = fixture.Services.GetRequiredService<OnboardMemberService>();
+        var users = fixture.Services.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = fixture.Services.GetRequiredService<ApplicationDbContext>();
+        var ground = Principal("ground", AppRoles.GroundControl);
+        Assert.True((await members.CreateAsync(ground, "cleanup-member", AppRoles.Crew, "Test", "Member", null)).Succeeded);
+        var user = (await users.FindByNameAsync("cleanup-member"))!;
+        var pin = (await members.GetPinAsync(ground, user.Id))!;
+        Assert.True((await members.DeleteAsync(ground, user.Id)).Succeeded);
+        Assert.Null(await users.FindByIdAsync(user.Id));
+        var pending = await db.MonitoringPinReservations.SingleAsync();
+        Assert.True(pending.DeletionPending);
+        var protection = fixture.Services.GetRequiredService<PinProtectionService>();
+        Assert.Equal(pin, protection.Reveal(pending.ProtectionId!, pending.ProtectedPin!));
+        var replacement = new ApplicationUser { UserName = "replacement", FirstName = "New", LastName = "Member" };
+        var rejected = await users.CreateAsync(replacement, pin);
+        Assert.Contains(rejected.Errors, x => x.Code == "PinUnavailable");
+
+        var handler = new DeletionStub();
+        var client = new Web.Monitoring.MonitoringClient(new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") });
+        var processor = new Web.Monitoring.MonitoringDeletionProcessor(db, protection, client);
+        await Assert.ThrowsAsync<AggregateException>(() => processor.ProcessAsync(default));
+        Assert.True(pending.DeletionPending);
+        Assert.NotNull(pending.ProtectedPin);
+        handler.Status = System.Net.HttpStatusCode.Accepted;
+        await processor.ProcessAsync(default);
+        Assert.False(pending.DeletionPending);
+        Assert.Null(pending.ProtectedPin);
+        Assert.Null(pending.ProtectionId);
+        Assert.Equal(2, handler.Attempts);
+        Assert.Contains((await users.CreateAsync(replacement, pin)).Errors, x => x.Code == "PinUnavailable");
+    }
+
+    private sealed class DeletionStub : HttpMessageHandler
+    {
+        public System.Net.HttpStatusCode Status = System.Net.HttpStatusCode.ServiceUnavailable;
+        public int Attempts;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Assert.Equal(HttpMethod.Delete, request.Method);
+            Assert.Matches("^/api/v1/crew/[0-9]{6}$", request.RequestUri!.AbsolutePath);
+            Attempts++;
+            return Task.FromResult(new HttpResponseMessage(Status));
+        }
+    }
 
     private sealed class IdentityFixture : IDisposable
     {

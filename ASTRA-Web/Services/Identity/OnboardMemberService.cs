@@ -53,7 +53,7 @@ public sealed class OnboardMemberService(ApplicationDbContext db, UserManager<Ap
         {
             var pin = RandomNumberGenerator.GetInt32(1_000_000).ToString("D6", CultureInfo.InvariantCulture);
             var lookup = lookups.Compute(pin);
-            if (await db.Users.AnyAsync(user => user.PinLookup == lookup)) continue;
+            if (await db.Users.AnyAsync(user => user.PinLookup == lookup) || await db.MonitoringPinReservations.AnyAsync(x => x.PinLookup == lookup)) continue;
             await using var transaction = await db.Database.BeginTransactionAsync();
             var member = new ApplicationUser
             {
@@ -150,7 +150,27 @@ public sealed class OnboardMemberService(ApplicationDbContext db, UserManager<Ap
     {
         RequireGroundControl(actor);
         var member = await FindOnboardMemberAsync(memberId);
-        return member is null ? MemberNotFound() : await users.DeleteAsync(member);
+        if (member is null) return MemberNotFound();
+        if (member.ProtectedPin is null) return IdentityResult.Failed(new IdentityError { Code = "PinUnavailable", Description = "The member PIN is unavailable; monitoring cleanup cannot be queued." });
+        string pin;
+        try { pin = protection.Reveal(member.Id, member.ProtectedPin); }
+        catch (CryptographicException) { return IdentityResult.Failed(new IdentityError { Code = "PinUnavailable", Description = "The member PIN could not be decrypted; restore the encryption keys before deleting this member." }); }
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        var reservation = new MonitoringPinReservation
+        {
+            PinLookup = lookups.Compute(pin), ProtectedPin = member.ProtectedPin,
+            ProtectionId = member.Id, DeletionPending = true
+        };
+        db.MonitoringPinReservations.Add(reservation);
+        var result = await users.DeleteAsync(member);
+        if (!result.Succeeded)
+        {
+            await transaction.RollbackAsync();
+            db.Entry(reservation).State = EntityState.Detached;
+            return result;
+        }
+        await transaction.CommitAsync();
+        return result;
     }
 
     private async Task<ApplicationUser?> FindOnboardMemberAsync(string memberId)

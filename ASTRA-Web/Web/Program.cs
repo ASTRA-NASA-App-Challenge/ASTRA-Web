@@ -63,9 +63,13 @@ builder.Services.AddHttpClient<Web.Monitoring.MonitoringClient>(client =>
 {
     var baseUrl = builder.Configuration["MonitoringApi:BaseUrl"] ?? "http://localhost:5191/";
     client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
-    client.Timeout = TimeSpan.FromSeconds(10);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    var key = builder.Configuration["MonitoringApi:WebApiKey"];
+    if (key is not { Length: >= 32 and <= 512 }) throw new InvalidOperationException("Set MonitoringApi:WebApiKey to the matching server secret.");
+    client.DefaultRequestHeaders.Add("X-Api-Key", key);
     client.MaxResponseContentBufferSize = 5 * 1024 * 1024;
 }).RemoveAllLoggers();
+builder.Services.AddScoped<Web.Monitoring.MonitoringDeletionProcessor>();
 builder.Services.AddHostedService<Web.Monitoring.PinRegistrationWorker>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -109,7 +113,8 @@ using (var scope = app.Services.CreateScope())
 
         const string astronautUsername = "ASTRA Test Astronaut";
         var astronaut = await users.FindByNameAsync(astronautUsername);
-        if (astronaut is null)
+        var testPinLookup = scope.ServiceProvider.GetRequiredService<PinLookupService>().Compute("123456");
+        if (astronaut is null && !await dbContext.MonitoringPinReservations.AnyAsync(x => x.PinLookup == testPinLookup))
         {
             astronaut = new ApplicationUser
             {
@@ -129,7 +134,7 @@ using (var scope = app.Services.CreateScope())
                 throw new InvalidOperationException(string.Join("; ", assigned.Errors.Select(error => error.Description)));
             }
         }
-        else if (astronaut.IsGroundControl || !await users.IsInRoleAsync(astronaut, AppRoles.Crew))
+        else if (astronaut is not null && (astronaut.IsGroundControl || !await users.IsInRoleAsync(astronaut, AppRoles.Crew)))
         {
             throw new InvalidOperationException("The local astronaut username is already used by another account.");
         }
@@ -165,5 +170,3 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
-
-
