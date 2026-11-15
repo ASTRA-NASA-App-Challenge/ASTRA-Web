@@ -59,6 +59,14 @@ builder.Services.AddScoped<IUserValidator<ApplicationUser>, AccountUserValidator
 builder.Services.AddAuthorization(options => options.AddPolicy(MedicalPolicies.ReadRecord,
     policy => policy.RequireAuthenticatedUser().AddRequirements(new ReadMedicalRecordRequirement())));
 builder.Services.AddSingleton<IAuthorizationHandler, MedicalRecordAuthorizationHandler>();
+builder.Services.AddHttpClient<Web.Monitoring.MonitoringClient>(client =>
+{
+    var baseUrl = builder.Configuration["MonitoringApi:BaseUrl"] ?? "http://localhost:5191/";
+    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.MaxResponseContentBufferSize = 5 * 1024 * 1024;
+}).RemoveAllLoggers();
+builder.Services.AddHostedService<Web.Monitoring.PinRegistrationWorker>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
@@ -157,4 +165,5 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
+
 

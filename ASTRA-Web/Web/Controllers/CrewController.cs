@@ -24,6 +24,17 @@ public class CrewController(OnboardMemberService members) : Controller
             if (result.Succeeded)
             {
                 TempData["CrewNotice"] = $"{input.FirstName.Trim()} {input.LastName.Trim()} was added to the onboard team.";
+                var roster = await members.GetMembersAsync(User, cancellationToken);
+                var created = roster.Single(x => x.Username == input.Username.Trim());
+                try
+                {
+                    if (created.Pin is not null)
+                        await HttpContext.RequestServices.GetRequiredService<Web.Monitoring.MonitoringClient>().RegisterAsync(created.Pin, cancellationToken);
+                }
+                catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
+                {
+                    TempData["CrewNotice"] += " Monitoring registration is pending and will retry automatically.";
+                }
                 return RedirectToAction(nameof(Index));
             }
             foreach (var error in result.Errors)
@@ -108,3 +119,4 @@ public class CrewController(OnboardMemberService members) : Controller
         });
     }
 }
+
