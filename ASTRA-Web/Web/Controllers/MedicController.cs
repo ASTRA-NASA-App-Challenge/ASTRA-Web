@@ -1,4 +1,5 @@
 using Common.Identity;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Identity;
@@ -13,7 +14,8 @@ public class MedicController(MedicMemberService members, CrewHealthReader health
 {
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        var roster = await members.GetMembersAsync(User, cancellationToken);
+        var viewerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var roster = (await members.GetMembersAsync(User, cancellationToken)).Where(x => x.Id != viewerId).ToList();
         var readings = await health.ReadRosterAsync(roster, cancellationToken);
         return View("~/Views/Crew/Index.cshtml", new CrewOverviewViewModel
         {

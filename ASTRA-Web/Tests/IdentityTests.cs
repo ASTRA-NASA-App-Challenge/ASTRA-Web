@@ -386,6 +386,9 @@ public class IdentityTests
         var overview = Assert.IsType<Microsoft.AspNetCore.Mvc.ViewResult>(await controller.Index(default));
         var cards = Assert.IsType<Web.Models.CrewOverviewViewModel>(overview.Model);
         Assert.True(cards.IsMedicView);
+        Assert.Single(cards.Members);
+        Assert.DoesNotContain(cards.Members, x => x.Id == medic.Id);
+        Assert.DoesNotContain(medic.Id, cards.Health.Keys);
         Assert.All(cards.Members, x => Assert.Null(x.Pin));
         Assert.All(cards.Health.Values, x => Assert.Null(x.Pin));
         Assert.IsType<Microsoft.AspNetCore.Mvc.NotFoundResult>(await controller.Health(admin.Id, default));

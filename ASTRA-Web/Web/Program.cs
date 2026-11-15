@@ -116,7 +116,11 @@ using (var scope = app.Services.CreateScope())
         const string astronautUsername = "ASTRA Test Astronaut";
         var astronaut = await users.FindByNameAsync(astronautUsername);
         var testPinLookup = scope.ServiceProvider.GetRequiredService<PinLookupService>().Compute("123456");
-        if (astronaut is null && !await dbContext.MonitoringPinReservations.AnyAsync(x => x.PinLookup == testPinLookup))
+        // Existing development accounts may have been edited or reassigned to Medic.
+        // Seed only when both the sample username and PIN are available; preserve all existing accounts.
+        if (astronaut is null
+            && !await dbContext.MonitoringPinReservations.AnyAsync(x => x.PinLookup == testPinLookup)
+            && !await dbContext.Users.AnyAsync(x => x.PinLookup == testPinLookup))
         {
             astronaut = new ApplicationUser
             {
@@ -135,10 +139,6 @@ using (var scope = app.Services.CreateScope())
                 await users.DeleteAsync(astronaut);
                 throw new InvalidOperationException(string.Join("; ", assigned.Errors.Select(error => error.Description)));
             }
-        }
-        else if (astronaut is not null && (astronaut.IsGroundControl || !await users.IsInRoleAsync(astronaut, AppRoles.Crew)))
-        {
-            throw new InvalidOperationException("The local astronaut username is already used by another account.");
         }
     }
 }

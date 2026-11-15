@@ -6,6 +6,7 @@
     ViewData["FullWidth"] = true;
     var crewCount = Model.Members.Count(member => !member.IsMedic);
     var medicCount = Model.Members.Count(member => member.IsMedic);
+    var urgentCount = Model.Health.Values.Count(x => HealthSeverity.Rank(x.State) >= 3);
 }
 
 <section class="astra-roster astra-shell" data-crew-roster aria-labelledby="roster-heading">
@@ -36,8 +37,8 @@
     }
 
     <div class="astra-roster__health-summary">
-        <span><strong>@Model.Health.Values.Count(x => HealthSeverity.Rank(x.State) >= 3)</strong> high alerts</span>
-        <button type="button" data-crew-attention aria-pressed="false">Needs attention <strong>@Model.Health.Values.Count(x => x.NeedsAttention)</strong></button>
+        <button type="button" class="@(urgentCount > 0 ? "has-urgent" : null)" data-crew-attention aria-pressed="false"
+                title="@(urgentCount > 0 ? $"Includes {urgentCount} high or urgent alerts. Click to filter members needing attention." : "Show members with warnings, overdue check-ins or incomplete readings.")">Needs attention <strong>@Model.Health.Values.Count(x => x.NeedsAttention)</strong></button>
         <a class="btn astra-button astra-button--primary" asp-action="Index">Refresh <span aria-hidden="true">↻</span></a>
     </div>
     <div class="astra-roster__toolbar">

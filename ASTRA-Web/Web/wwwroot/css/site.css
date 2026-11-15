@@ -1368,6 +1368,8 @@ label {
 .astra-roster__health-summary { display:flex; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem; color:#c6d9e7; font-size:.9rem; }
 .astra-roster__health-summary button { padding:.5rem .8rem; border:1px solid #34536b; border-radius:.4rem; background:#102238; color:#c6d9e7; }
 .astra-roster__health-summary button[aria-pressed="true"] { border-color:#f6d567; color:#f6d567; }
+.astra-roster__health-summary button.has-urgent { border-color:#ff536b; color:#ff9daa; }
+.astra-roster__health-summary button.has-urgent[aria-pressed="true"] { background:rgba(255,83,107,.15); }
 .astra-roster__health-summary a { margin-left:auto; }
 .health-header-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:.75rem; flex-shrink:0; }
 .health-header-actions .astra-button { white-space:nowrap; }
